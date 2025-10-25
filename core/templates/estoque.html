@@ -1,0 +1,1184 @@
+{% extends 'cab.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+/* Contêiner da paginação */
+.pagination-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Lista de itens da paginação */
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+/* Itens da paginação */
+.pagination li {
+    margin: 0 5px;
+}
+
+/* Links de página */
+.pagination a,
+.pagination span {
+    display: inline-block;
+    padding: 8px 14px;
+    font-size: 14px;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 5px;
+    border: 1px solid #000;
+    color: #000; /* Preto */
+    background-color: #fff; /* Branco */
+    transition: all 0.3s;
+}
+
+/* Hover nos links */
+.pagination a:hover {
+    background-color: #d4af37; /* Dourado */
+    color: #fff;
+    border-color: #d4af37;
+}
+
+/* Página ativa */
+.pagination .active span {
+    background-color: #d4af37; /* Dourado */
+    color: #fff;
+    border-color: #d4af37;
+}
+
+/* Botões desabilitados (anterior/próximo inativos) */
+.pagination .disabled span {
+    color: #aaa;
+    border-color: #ccc;
+    background-color: #fff;
+    cursor: not-allowed;
+}
+
+.titulo-estoque {
+    margin-top: 15px;
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    font-family: 'Segoe UI', Arial, sans-serif;
+    color: #d4af37;
+}
+
+/* GRID DE PRODUTOS */
+.produtos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 2.5rem;
+}
+
+/* CARD */
+.card-produto {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: #111;
+    color: #f5f5f5;
+    border-radius: 14px;
+    padding: 18px;
+    min-height: 180px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border 0.3s ease;
+    border: 2px solid transparent;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+.card-produto:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.6);
+}
+
+/* ====== BORDAS CONFORME VALIDADE ====== */
+.borda-cinza { border: 2px solid #888 !important; }
+.borda-preta { border: 2px solid #000 !important; }
+.borda-vermelha { border: 2px solid #e84118 !important; }
+.borda-verde { border: 2px solid #2ecc71 !important; }
+
+/* IMAGEM */
+.card-produto img {
+    width:120px;
+    height:120px;
+    object-fit:cover;
+    border-radius:12px;
+    flex-shrink:0;
+}
+
+/* TEXTO */
+.card-produto .produto-info {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    overflow:hidden;
+}
+.card-produto .produto-info h5 {
+    font-size:1.25rem;
+    font-weight:bold;
+    margin:0 0 10px;
+    color:#ffd700;
+    white-space:normal;
+    word-wrap:break-word;
+}
+
+/* BLOCO DE INFORMAÇÃO */
+.info-item {
+    display:flex;
+    flex-direction:column;
+    margin-bottom:6px;
+}
+.info-item .label {
+    font-size:0.75rem;
+    color:#aaa;
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+    margin-bottom:2px;
+}
+.info-item .value {
+    font-size:1rem;
+    color:#f5f5f5;
+    font-weight:500;
+}
+
+/* CAMPOS DE FORMULÁRIO */
+.info-item {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+.info-item .label {
+    font-size: 0.85rem;
+    color: #bbb;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+.info-item select,
+.info-item input {
+    padding: 10px 12px;
+    border-radius: 12px;
+    border: 1px solid #444;
+    background: #2a2a2a;
+    color: #fff;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.3s ease;
+}
+.info-item select:focus,
+.info-item input:focus {
+    border-color: #fbc531;
+    box-shadow: 0 0 8px rgba(251,197,49,0.5);
+}
+
+/* MODAL - formato retangular compacto */
+.modal-custom {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 500px;   /* largura fixa */
+  max-height: 90vh;   /* não deixa estourar tela */
+  background: #1c1c1c;
+  padding: 25px;
+  border-radius: 14px;
+  text-align: center;
+  color: #fff;
+  display: none;
+  overflow-y: auto;   /* rolagem se passar do limite */
+  z-index: 1000;
+}
+
+
+.modal-custom.show {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-content {
+  background: #1c1c1c;
+  color: #fff;
+  padding: 30px 25px;
+  border-radius: 20px;
+  max-width: 450px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+}
+
+/* Removido: animação de entrada */
+@keyframes modalFadeIn {
+  from { transform: none; opacity: 1; }
+  to { transform: none; opacity: 1; }
+}
+
+/* FECHAR MODAL */
+.close {
+    position: absolute;
+    top: 12px;
+    right: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: #f1c40f;
+    transition: transform 0.2s ease;
+}
+
+
+/* TÍTULO */
+.modal-nome {
+    font-size: 1.8rem;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #ffd700;
+    text-shadow: 0 0 12px rgba(255,215,0,0.6);
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+
+/* BOTÕES */
+.modal-buttons {
+    margin-top: 20px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+.btn-modern {
+    padding: 12px 22px;
+    border: none;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+.btn-edit {
+    background: linear-gradient(135deg, #fbc531, #e1b12c);
+    color: #111;
+}
+.btn-edit:hover {
+    background: linear-gradient(135deg, #ffd700, #f5c400);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(255,215,0,0.6);
+}
+.btn-close {
+    background: linear-gradient(135deg, #636e72, #718093);
+    color: #fff;
+}
+.btn-close:hover {
+    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(189,195,199,0.6);
+}
+.modal-img {
+    width:100px;
+    height:100px;
+    object-fit:cover;
+    margin-bottom:15px;
+    border-radius:10px;
+}
+.close {
+    position:absolute;
+    top:10px;
+    right:15px;
+    font-size:24px;
+    cursor:pointer;
+    color:#d4af37;
+}
+.modal-buttons { margin-top:15px; display:flex; justify-content:center; gap:10px; }
+
+/* ===== MODAL TEXTO ===== */
+.modal-nome {
+    font-size:1.6rem;
+    font-weight:bold;
+    margin-bottom:15px;
+    color:#ffd700;
+    text-shadow:0 0 10px rgba(255,215,0,0.5);
+}
+
+.modal-info p {
+    font-size:1rem;
+    margin:6px 0;
+    color:#ddd;
+    transition:color 0.3s ease;
+}
+.modal-info p:hover { color:#ffd700; }
+
+/* ===== MODAL BOTÕES MODERNOS ===== */
+.btn-modern {
+    padding:10px 18px;
+    border:none;
+    border-radius:10px;
+    font-size:0.95rem;
+    font-weight:bold;
+    cursor:pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+}
+.btn-edit { background:linear-gradient(135deg,#fbc531,#e1b12c); color:#111; }
+.btn-edit:hover { background:linear-gradient(135deg,#ffd700,#f5c400); transform:translateY(-2px); box-shadow:0 4px 12px rgba(255,215,0,0.6); }
+.btn-delete { background:linear-gradient(135deg,#e84118,#c23616); color:#fff; }
+.btn-delete:hover { background:linear-gradient(135deg,#ff5e3a,#d63031); transform:translateY(-2px); box-shadow:0 4px 12px rgba(231,76,60,0.6); }
+.btn-close { background:linear-gradient(135deg,#718093,#636e72); color:#fff; }
+.btn-close:hover { background:linear-gradient(135deg,#95a5a6,#7f8c8d); transform:translateY(-2px); box-shadow:0 4px 12px rgba(189,195,199,0.6); }
+
+
+/* Estilo para inputs dentro dos cards */
+  .input-estilo {
+    padding:6px 8px;
+    border:1px solid #ccc;
+    border-radius:5px;
+    font-size:13px;
+    transition: all 0.2s ease;
+  }
+  .input-estilo:focus {
+    border-color:#d4af37;
+    outline:none;
+    box-shadow:0 0 4px rgba(212,175,55,0.5);
+  }
+  /* Para alinhamento dos controles dentro do card */
+  .produto-card {
+    display:flex;
+    align-items:center;
+    gap:15px;
+    border:1px solid #ccc;
+    padding:12px;
+    border-radius:8px;
+    margin-bottom:10px;
+    background:#fafafa;
+  }
+  .produto-info {
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .linha-inputs {
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .btn-adicionar {
+    padding:6px 12px;
+    background:#28a745;
+    color:#fff;
+    border:none;
+    border-radius:5px;
+    cursor:pointer;
+    transition:background 0.2s ease;
+  }
+  .btn-adicionar:hover {
+    background:#218838;
+  }
+
+    #produtoResultado {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* impede barra lateral horizontal */
+}
+
+#produtoResultado .produto-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border: 1px solid #ccc;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+  background: #fafafa;
+  width: 100%;              /* ocupa toda largura */
+  box-sizing: border-box;   /* respeita padding */
+  overflow: hidden;         /* evita estourar o modal */
+}
+
+
+/* garante que a tabela não crie quadrado branco */
+#carrinhoTabela,
+#carrinhoTabela thead,
+#carrinhoTabela tbody,
+#carrinhoTabela tr,
+#carrinhoTabela th,
+#carrinhoTabela td {
+  background: transparent !important;
+}
+
+/* produto em linha (horizontal) */
+.carrinho-produto {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-start;
+}
+
+.carrinho-produto img {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+
+
+</style>
+
+<h2 class="titulo-estoque">Estoque de Produtos</h2>
+
+<!-- FILTROS -->
+<form method="get" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+    <input type="text" name="busca" value="{{ busca }}" placeholder="Digite o nome ou código do produto"
+           style="padding:8px; border-radius:5px; border:1px solid #ccc; width:250px;">
+
+    <select name="categoria" style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+        <option value="">Todas as categorias</option>
+        {% for cat in categorias %}
+            <option value="{{ cat.id }}" {% if categoria_id == cat.id|stringformat:"s" %}selected{% endif %}>
+                {{ cat.nome_categoria }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <select name="validade" style="padding:8px; border-radius:5px; border:1px solid #ccc;">
+        <option value="">Mostrar todos os produtos</option>
+        <option value="proximo" {% if validade == "proximo" %}selected{% endif %}>Produtos que vencem nos próximos 5 dias</option>
+        <option value="promocao" {% if validade == "promocao" %}selected{% endif %}>Produtos para promoção (vencem entre 12 dias atrás e 6 dias à frente)</option>
+    </select>
+
+    <button type="submit" style="padding:8px 15px; background:#d4af37; color:#000; border:none; border-radius:5px; font-weight:bold;">Aplicar filtro</button>
+</form>
+
+<!-- LAYOUT PRINCIPAL -->
+<div style="display:grid; grid-template-columns:4fr 1fr; gap:20px; align-items:start;">
+
+    <!-- COLUNA PRODUTOS -->
+    <div>
+        <div class="produtos-grid">
+            {% for wrapper in estoque %}
+                {% with item=wrapper.obj borda=wrapper.borda %}
+                <div class="card-produto {{ borda }}"
+                     onclick="abrirModalEstoque(this)"
+                     data-nome="{{ item.produtos.nome_produto }}"
+                     data-quantidade="{{ item.quantidade }}"
+                     data-lote="{{ item.lote }}"
+                     data-validade="{{ item.data_validade|date:'d/m/Y' }}"
+                     data-img="{% if item.produtos.imagem %}{{ item.produtos.imagem.url }}{% else %}{% static 'img/sem-imagem.png' %}{% endif %}">
+                    <img src="{% if item.produtos.imagem %}{{ item.produtos.imagem.url }}{% else %}{% static 'img/sem-imagem.png' %}{% endif %}" alt="{{ item.produtos.nome_produto }}">
+                    <div class="produto-info">
+                        <h5>{{ item.produtos.nome_produto }}</h5>
+                        <div class="info-item"><span class="label">Quantidade</span><span class="value">{{ item.quantidade }}</span></div>
+                        <div class="info-item"><span class="label">Lote</span><span class="value">{{ item.lote }}</span></div>
+                        <div class="info-item"><span class="label">Validade</span><span class="value">{{ item.data_validade|date:"d/m/Y" }}</span></div>
+                    </div>
+                </div>
+                {% endwith %}
+            {% empty %}
+                <p style="grid-column:1/-1; text-align:center; color:#aaa;">Nenhum produto em estoque.</p>
+            {% endfor %}
+        </div>
+
+        <!-- PAGINAÇÃO -->
+       {% if estoque.has_other_pages %}
+<div class="pagination-container">
+    <ul class="pagination">
+        {% if estoque.has_previous %}
+            <li><a href="?page={{ estoque.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if validade %}&validade={{ validade }}{% endif %}">&laquo;</a></li>
+        {% else %}
+            <li class="disabled"><span>&laquo;</span></li>
+        {% endif %}
+
+        {% for i in estoque.paginator.page_range %}
+            {% if estoque.number == i %}
+                <li class="active"><span>{{ i }}</span></li>
+            {% else %}
+                <li><a href="?page={{ i }}{% if busca %}&busca={{ busca }}{% endif %}{% if validade %}&validade={{ validade }}{% endif %}">{{ i }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if estoque.has_next %}
+            <li><a href="?page={{ estoque.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if validade %}&validade={{ validade }}{% endif %}">&raquo;</a></li>
+        {% else %}
+            <li class="disabled"><span>&raquo;</span></li>
+        {% endif %}
+    </ul>
+</div>
+{% endif %}
+    </div> <!-- Fim coluna produtos -->
+
+    <!-- COLUNA LATERAL (ações do estoque) -->
+    <div>
+        <div style="background:#111; color:#d4af37; padding:20px; border-radius:12px; box-shadow:0 4px 12px rgba(0,0,0,0.3); position:sticky; top:80px;">
+            <h3 style="margin-bottom:15px; text-align:center; font-size:18px;">Ações do Estoque</h3>
+            <div style="display:flex; flex-direction:column; gap:10px;">
+    {% if request.user.is_authenticated %}
+        <!-- Todos os usuários autenticados podem ver estas duas -->
+        <button onclick="document.getElementById('modalForm').style.display='block'"
+                style="padding:10px; background:#000; color:#d4af37; border:none; border-radius:6px; font-weight:bold;">
+            ➕ Adicionar Produto ao Estoque
+        </button>
+        <button onclick="document.getElementById('modalFormMore').style.display='block'"
+                style="padding:10px; background:#d4af37; color:#000; border:none; border-radius:6px; font-weight:bold;">
+            ➕ Adição em massa no Estoque
+        </button>
+
+        {% if request.user.is_staff %}
+            <!-- Apenas staff pode ver estes botões -->
+            <button onclick="window.location.href='{% url 'dash_vendas' %}'"
+                    style="padding:10px; background:#000; color:#d4af37; border:2px solid #d4af37; border-radius:6px; font-weight:bold;">
+                📊 Relatório
+            </button>
+            <button onclick="document.getElementById('modalRemoveEstoque').style.display='block'"
+                    style="padding:10px; background:red; color:#fff; border:none; border-radius:6px; font-weight:bold;">
+                ⬇ Dar Baixa Geral
+            </button>
+            <button
+                id="abrirBaixaUnicaBtn"
+                style="padding:10px; background:purple; color:#fff; border:none; border-radius:6px; font-weight:bold;">
+                ✂ Baixa Única
+            </button>
+
+        {% endif %}
+
+    {% else %}
+        <p style="text-align:center; color:#aaa;">Ações disponíveis apenas para usuários logados.</p>
+    {% endif %}
+</div>
+
+        </div>
+    </div> <!-- Fim coluna lateral -->
+
+</div> <!-- Fim layout principal -->
+
+<!-- MODAL DE DETALHES DO PRODUTO -->
+<div id="modalEstoque" class="modal-custom">
+    <div class="modal-content">
+        <span class="close" onclick="document.getElementById('modalEstoque').style.display='none'">&times;</span>
+        <img id="estoqueImg" src="" class="modal-img" alt="">
+        <h3 id="estoqueNome" class="modal-nome"></h3>
+        <div class="modal-info">
+            <p id="estoqueQtd"></p>
+            <p id="estoqueLote"></p>
+            <p id="estoqueValidade"></p>
+        </div>
+        <div class="modal-buttons">
+            <button class="btn-modern btn-close" onclick="document.getElementById('modalEstoque').style.display='none'">Fechar</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE ADIÇÃO DE ESTOQUE -->
+<div id="modalForm" class="modal-custom">
+    <div class="modal-content">
+        <span class="close" onclick="document.getElementById('modalForm').style.display='none'">&times;</span>
+        <h3 class="modal-nome">Adicionar Produto ao Estoque</h3>
+        <form id="formEstoque" method="POST">
+            {% csrf_token %}
+            <div class="info-item">
+                <label class="label" for="produto">Produto:</label>
+                <select name="produto_id" id="produto" required>
+                    <option value="">Selecione um produto</option>
+                </select>
+            </div>
+
+            <div class="info-item">
+                <label class="label" for="quantidade">Quantidade:</label>
+                <input type="number" name="quantidade" id="quantidade" min="1" required>
+            </div>
+
+            <div class="info-item">
+                <label class="label" for="data_validade">Data de Validade:</label>
+                <input type="date" name="data_validade" id="data_validade">
+            </div>
+
+            <div class="modal-buttons">
+                <button type="submit" class="btn-modern btn-edit">💾 Salvar</button>
+                <button type="button" class="btn-modern btn-close" onclick="document.getElementById('modalForm').style.display='none'">Fechar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<!-- MODAL DE ADIÇÃO EM MASSA -->
+<div id="modalFormMore" class="modal-custom">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('modalFormMore').style.display='none'">&times;</span>
+    <h3 class="modal-nome">Adição em Massa no Estoque</h3>
+
+    <!-- Campo de pesquisa de produtos -->
+    <div>
+      <label for="searchProduto">Pesquisar Produto</label><br>
+      <input type="text" id="searchProduto"
+             placeholder="Digite o nome ou código do produto"
+             style="padding:8px; border-radius:5px; border:1px solid #ccc; width:250px;">
+      <button onclick="buscarProduto()"
+              style="padding:8px 12px; background:#d4af37; color:#000; border:none; border-radius:5px; font-weight:bold;">
+        Buscar
+      </button>
+    </div>
+
+ <!-- Resultado da pesquisa -->
+<div id="produtoResultado" style="margin-top:10px; max-height:250px; overflow-y:auto;"></div>
+
+
+<!-- Carrinho de produtos a adicionar -->
+<h4 style="margin-top:20px;">Produtos Selecionados</h4>
+<div style="overflow-x:auto; width:100%;">
+  <table id="carrinhoTabela"
+         style="width:100%; table-layout:auto; max-width:100%; border-collapse: collapse;
+                font-size:14px; border:1px solid #ddd; border-radius:6px; background:#fafafa; box-sizing:border-box;">
+    <thead style="background:#f5f5f5; text-align:left;">
+      <tr>
+        <th style="padding:9px; border-bottom:1px solid #ddd; text-align:left;">Produto</th>
+        <th style="padding:9px; border-bottom:1px solid #ddd; width:100px; text-align:center;">Quantidade</th>
+        <th style="padding:9px; border-bottom:1px solid #ddd; width:150px; text-align:center;">Data de Validade</th>
+        <th style="padding:9px; border-bottom:1px solid #ddd; width:90px; text-align:center;">Ações</th>
+      </tr>
+    </thead>
+    <tbody id="carrinhoBody" style="background:#fafafa; word-break: break-word;">
+      <!-- Itens adicionados aparecem aqui -->
+    </tbody>
+  </table>
+</div>
+
+<button style="margin-top:15px; padding:10px 16px; background:#28a745; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"
+onclick="salvarEstoque()">
+  Salvar Estoque
+</button>
+
+</div>
+</div>
+
+
+<!-- MODAL DE REMOÇÃO EM MASSA -->
+<div id="modalRemoveEstoque" class="modal-custom">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('modalRemoveEstoque').style.display='none'">&times;</span>
+    <h3 class="modal-nome" style="text-align:center; color:#d4af37;">Remover Produtos do Estoque</h3>
+
+    <!-- Campo de pesquisa -->
+<div style="margin-bottom:15px; text-align:center;">
+  <label for="searchProdutoRemove" style="font-weight:bold;">Pesquisar Produto</label><br>
+  <input type="text" id="searchProdutoRemove"
+         placeholder="Digite o nome ou código do produto"
+         style="padding:8px; border-radius:5px; border:1px solid #aaa; width:250px; margin-right:5px;">
+  <button id="btnSearchRemove"
+          style="padding:8px 12px; background:#d4af37; color:#000; border:none; border-radius:5px; font-weight:bold; cursor:pointer;"
+  onclick="buscarProdutoRemover()">
+    Buscar
+  </button>
+</div>
+
+<!-- Resultado da pesquisa -->
+<div id="produtoResultadoRemove" style="margin-top:10px; max-height:250px; overflow-y:auto;"></div>
+
+
+    <!-- Carrinho -->
+    <h4 style="margin-top:20px; text-align:center; color:#d4af37;">Produtos Selecionados para Remoção</h4>
+    <div style="overflow-x:auto; width:100%;">
+      <table id="carrinhoTabelaRemove"
+             style="width:100%; table-layout:auto; max-width:100%; border-collapse: collapse;
+                    font-size:14px; border:1px solid #333; border-radius:6px; background:#111; color:#fff; box-sizing:border-box;">
+        <thead style="background:#d4af37; color:#000; text-align:left;">
+          <tr>
+            <th style="padding:9px; border-bottom:1px solid #999; text-align:left;">Produto (Lote/Validade)</th>
+            <th style="padding:9px; border-bottom:1px solid #999; width:100px; text-align:center;">Qtd a Remover</th>
+            <th style="padding:9px; border-bottom:1px solid #999; width:150px; text-align:center;">Qtd Atual</th>
+            <th style="padding:9px; border-bottom:1px solid #999; width:90px; text-align:center;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="carrinhoBodyRemove" style="word-break: break-word;">
+          <!-- Linhas preenchidas via JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div style="text-align:center;">
+      <button style="margin-top:15px; padding:10px 16px; background:red; color:#fff; border:none; border-radius:6px; font-weight:bold; cursor:pointer;"
+              onclick="removerEstoque()">
+        Remover do Estoque
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE BAIXA ÚNICA (corrigido) -->
+<div id="modalBaixaUnica" class="modal-custom">
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('modalBaixaUnica').style.display='none'">&times;</span>
+    <h3 class="modal-nome">Baixa Única</h3>
+
+    <div class="info-item">
+      <label class="label" for="produtoSelect">Produto:</label>
+      <select id="produtoSelect" required>
+        <option value="">Selecione um produto</option>
+        {% for item in estoque %}
+          <option value="{{ item.obj.id }}">
+            {{ item.obj.produtos.nome_produto }} ({{ item.obj.quantidade }} un.)
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="info-item">
+      <label class="label" for="qtdBaixa">Quantidade para dar baixa:</label>
+      <input id="qtdBaixa" type="number" min="1" placeholder="Digite a quantidade">
+    </div>
+
+    <div class="modal-buttons">
+      <button id="cancelarBaixa" class="btn-modern btn-close">Cancelar</button>
+      <button id="confirmarBaixa" class="btn-modern btn-edit">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+function abrirModalEstoque(card) {
+  const modal = document.getElementById("modalEstoque");
+  document.getElementById("estoqueImg").src = card.dataset.img;
+  document.getElementById("estoqueNome").textContent = card.dataset.nome;
+  document.getElementById("estoqueQtd").textContent = "Quantidade: " + card.dataset.quantidade;
+  document.getElementById("estoqueLote").textContent = "Lote: " + card.dataset.lote;
+  document.getElementById("estoqueValidade").textContent = "Validade: " + card.dataset.validade;
+  modal.style.display = "flex";
+}
+
+document.getElementById("formEstoque").addEventListener("submit", function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch("{% url 'adicionar_estoque' %}", {
+        method:"POST",
+        headers: { "X-CSRFToken": formData.get("csrfmiddlewaretoken") },
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){ alert(data.message); location.reload(); }
+        else { alert("Erro: "+data.message); }
+    })
+    .catch(err => console.error(err));
+});
+
+let carrinho = [];
+const todos_produtos = {{ todos_produtos_json|safe }};
+ // passa a lista direto do Django (JSON)
+
+  function buscarProduto() {
+    const termo = document.getElementById("searchProduto").value.toLowerCase();
+    const resultadoDiv = document.getElementById("produtoResultado");
+    resultadoDiv.innerHTML = "";
+
+    if (!termo) {
+      alert("Digite algo para buscar.");
+      return;
+    }
+
+    // Filtrar os produtos pelo nome ou código
+    const filtrados = todos_produtos.filter(p =>
+      p.nome_produto.toLowerCase().includes(termo) ||
+      (p.codigo && p.codigo.toLowerCase().includes(termo))
+    );
+
+    if (filtrados.length === 0) {
+      resultadoDiv.innerHTML = "<p>Nenhum produto encontrado.</p>";
+      return;
+    }
+
+    // Monta cards estilizados para os produtos encontrados
+    filtrados.forEach(produto => {
+      resultadoDiv.innerHTML += `
+        <div style="display:flex; align-items:center; gap:15px; border:1px solid #ccc; padding:10px; border-radius:8px; margin-bottom:10px;">
+          <img src="${produto.imagem || 'https://via.placeholder.com/60'}" width="60" height="60" style="border-radius:5px; object-fit:cover;">
+          <div style="flex:1;">
+            <strong>${produto.nome_produto}</strong> (${produto.codigo || 'sem código'})<br>
+            <label>Quantidade:</label>
+            <input type="number" id="quantidadeAdd_${produto.id}" min="1" value="1" style="width:70px; margin-right:10px;">
+            <label>Validade:</label>
+            <input type="date" id="validadeAdd_${produto.id}">
+          </div>
+          <button onclick="adicionarCarrinho(${produto.id}, '${produto.nome_produto}', '${produto.codigo || ''}', '${produto.imagem || 'https://via.placeholder.com/60'}')"
+                  style="padding:6px 12px; background:#28a745; color:#fff; border:none; border-radius:5px;">
+            Adicionar
+          </button>
+        </div>
+      `;
+    });
+  }
+
+  function adicionarCarrinho(id, nome, codigo, imagem) {
+    const quantidade = document.getElementById("quantidadeAdd_" + id).value;
+    const validade = document.getElementById("validadeAdd_" + id).value;
+
+    if (!quantidade || quantidade <= 0) {
+      alert("Informe uma quantidade válida.");
+      return;
+    }
+
+    carrinho.push({ id, nome, codigo, imagem, quantidade, validade });
+    atualizarCarrinho();
+
+    // Limpa resultado e pesquisa para próxima adição
+    document.getElementById("produtoResultado").innerHTML = "";
+    document.getElementById("searchProduto").value = "";
+  }
+
+function atualizarCarrinho() {
+  const tbody = document.getElementById("carrinhoBody");
+  tbody.innerHTML = "";
+
+  carrinho.forEach((item, index) => {
+    tbody.innerHTML += `
+      <tr>
+        <td style="padding:10px; text-align:left; word-break: normal; overflow-wrap: break-word; white-space: normal;">
+          ${item.nome} (${item.codigo || '-'})
+        </td>
+        <td style="padding:10px; text-align:center;">${item.quantidade}</td>
+        <td style="padding:10px; text-align:center;">${item.validade || '-'}</td>
+        <td style="padding:10px; text-align:center;">
+          <button onclick="removerCarrinho(${index})"
+                  style="padding:5px 9px; background:#dc3545; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+            del
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+  function removerCarrinho(index) {
+    carrinho.splice(index, 1);
+    atualizarCarrinho();
+  }
+
+function salvarEstoque() {
+  if (carrinho.length === 0) {
+    alert("Adicione pelo menos um produto.");
+    return;
+  }
+
+  const itens = carrinho.map(item => ({
+    id: item.id,
+    nome: item.nome,
+    codigo: item.codigo,
+    quantidade: Number(item.quantidade),
+    validade: item.validade || null
+  }));
+
+  fetch("{% url 'estoque_adicao_massa' %}", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ itens })
+  })
+  .then(res => res.json())
+  .then(resp => {
+    if (resp.sucesso) {
+      // Atualiza a tabela localmente
+      carrinho.forEach(item => {
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+          <td style="padding:10px; text-align:left; word-break: break-word;">
+            ${item.nome} (${item.codigo || '-'})
+          </td>
+          <td style="padding:10px; text-align:center;">${item.quantidade}</td>
+          <td style="padding:10px; text-align:center;">${item.validade || '-'}</td>
+          <td style="padding:10px; text-align:center;">
+            <button onclick="removerCarrinhoElement(this)"
+                    style="padding:5px 10px; background:#dc3545; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+              Remover
+            </button>
+          </td>
+        `;
+        document.getElementById('carrinhoBody').appendChild(row);
+      });
+
+      alert("Produtos adicionados ao estoque!");
+
+      // Limpa o carrinho de adição para próxima operação
+      carrinho = [];
+      atualizarCarrinho(); // limpa os inputs do modal, se quiser
+
+      document.getElementById('modalFormMore').style.display = 'none';
+    } else {
+      alert("Erro ao salvar estoque: " + resp.erro);
+    }
+  })
+  .catch(err => console.error(err));
+}
+
+
+// Função para pegar CSRF cookie
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === (name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+
+   // produtos JSON enviado do backend
+    const produtos = {{ todos_produtos_json|safe }};  // o |safe permite usar JSON diretamente no JS
+    const selectProduto = document.getElementById('produto');
+
+    produtos.forEach(produto => {
+        const option = document.createElement('option');
+        option.value = produto.id;
+        option.textContent = produto.nome_produto;
+        selectProduto.appendChild(option);
+    });
+
+
+//baixas gerais
+
+// Array de produtos vindo do backend
+const produtosEstoque = {{ estoque_json|safe }};
+console.log("Estoque carregado:", produtosEstoque);
+let carrinhoRemover = [];
+
+function formatarDataBR(dataISO) {
+    if (!dataISO) return "-"; // caso venha null
+    const partes = dataISO.split("-"); // [ano, mes, dia]
+    if (partes.length !== 3) return dataISO;
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+}
+
+
+// Buscar produtos
+function buscarProdutoRemover() {
+    const termo = document.getElementById("searchProdutoRemove").value.trim().toLowerCase();
+    const resultadoDiv = document.getElementById("produtoResultadoRemove");
+    resultadoDiv.innerHTML = "";
+
+    if (!termo) {
+        resultadoDiv.innerHTML = "<p style='color:red;'>Digite um nome ou código para buscar.</p>";
+        return;
+    }
+
+    const filtrados = produtosEstoque
+    // Filtra pelo termo de busca
+    .filter(p =>
+        (p["produtos__nome_produto"] && p["produtos__nome_produto"].toLowerCase().includes(termo)) ||
+        (p["produtos__codigo"] && p["produtos__codigo"].toLowerCase().includes(termo))
+    )
+
+    if (filtrados.length === 0) {
+        resultadoDiv.innerHTML = "<p style='color:#fff;'>Nenhum produto encontrado.</p>";
+        return;
+    }
+
+    filtrados.forEach(produto => {
+        resultadoDiv.innerHTML += `
+            <div style="display:flex; justify-content:space-between; align-items:center;
+                        border:1px solid #333; padding:10px; border-radius:8px; margin-bottom:8px; background:#222; color:#fff;">
+                <div>
+                    <strong>${produto["produtos__nome_produto"]}</strong>
+                    (${produto["produtos__codigo"] || "sem código"})<br>
+                    Lote: ${produto.lote || "-"} | Validade: ${formatarDataBR(produto.data_validade)}<br>
+                    Quantidade atual: <b>${produto.quantidade}</b>
+                </div>
+                <button onclick="adicionarAoCarrinho(${produto.id})"
+                        style="padding:6px 12px; background:#28a745; color:#fff; border:none; border-radius:5px; cursor:pointer;">
+                    Selecionar
+                </button>
+            </div>
+        `;
+    });
+}
+
+/// Adiciona produto no carrinho
+function adicionarAoCarrinho(idEstoque) {
+    const produto = produtosEstoque.find(p => p.id === idEstoque);
+
+    if (!produto) return;
+    if (carrinhoRemover.some(p => p.id === idEstoque)) {
+        alert("Produto já está no carrinho!");
+        return;
+    }
+
+    // Cópia limpa
+    const copia = {
+        ...produto,
+        qtd_remover: 0
+    };
+
+    carrinhoRemover.push(copia);
+    atualizarCarrinhoRemove();
+}
+
+
+
+// Atualiza carrinho
+function atualizarCarrinhoRemove() {
+    const tbody = document.getElementById("carrinhoBodyRemove");
+    tbody.innerHTML = "";
+
+    carrinhoRemover.forEach((produto, index) => {
+        tbody.innerHTML += `
+            <tr>
+                <td>
+                    ${produto["produtos__nome_produto"]}
+                    <br><small>Lote: ${produto.lote || "-"} |  Val: ${formatarDataBR(produto.data_validade)}</small>
+                </td>
+                <td style="text-align:center;">
+                    <input type="number" min="0" max="${produto.quantidade}" value="${produto.qtd_remover || 0}"
+                           onchange="carrinhoRemover[${index}].qtd_remover=parseInt(this.value) || 0">
+                </td>
+                <td style="text-align:center;">${produto.quantidade ?? 0}</td>
+                <td style="text-align:center;">
+                    <button onclick="removerDoCarrinho(${index})"
+                            style="background:red; color:white; border:none; border-radius:4px; padding:2px 6px;">✖</button>
+                </td>
+            </tr>
+        `;
+    });
+}
+
+// Remove do carrinho
+function removerDoCarrinho(index) {
+    carrinhoRemover.splice(index, 1);
+    atualizarCarrinhoRemove();
+}
+
+
+function removerEstoque() {
+    if (carrinhoRemover.length === 0) {
+        alert("Selecione pelo menos um produto para remover.");
+        return;
+    }
+
+    const csrftoken = getCookie('csrftoken'); // garante que o CSRF é pego
+
+    fetch("{% url 'estoque_baixa_geral' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken,
+        },
+        body: JSON.stringify({ produtos: carrinhoRemover })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) { // aqui deve ser "success" conforme sua view
+            alert("Baixa realizada com sucesso!");
+
+            // Atualiza a lista de estoque com os dados atualizados do backend
+            produtosEstoque.length = 0;
+            data.estoque_atualizado.forEach(p => produtosEstoque.push(p));
+
+            // Limpa o carrinho
+            carrinhoRemover = [];
+            atualizarCarrinhoRemove();
+
+            // Limpa resultados da pesquisa
+            document.getElementById("produtoResultadoRemove").innerHTML = "";
+        } else {
+            alert("Ocorreu um erro: " + (data.message || "Erro desconhecido"));
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Erro ao comunicar com o servidor.");
+    });
+}
+
+// Função auxiliar para pegar o CSRF do cookie
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+
+
+document.getElementById("abrirBaixaUnicaBtn").addEventListener("click", function() {
+    document.getElementById("modalBaixaUnica").style.display = "block";
+});
+
+document.getElementById("cancelarBaixa").addEventListener("click", function() {
+    document.getElementById("modalBaixaUnica").style.display = "none";
+});
+
+document.getElementById("confirmarBaixa").addEventListener("click", function() {
+    const produtoId = document.getElementById("produtoSelect").value;
+    const qtd = document.getElementById("qtdBaixa").value;
+
+    if (!produtoId || !qtd) {
+        alert("Selecione um produto e informe a quantidade.");
+        return;
+    }
+
+    fetch("/stock/baixa-unica/", {
+    method: "POST",
+    headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({ produto_id: produtoId, quantidade: qtd })
+})
+
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert("Baixa registrada com sucesso!");
+            location.reload();
+        } else {
+            alert(data.error || "Erro ao registrar baixa.");
+        }
+    })
+    .catch(() => alert("Erro de conexão."));
+
+    // Fecha modal
+    document.getElementById("modalBaixaUnica").style.display = "none";
+});
+
+// Função auxiliar para pegar o CSRF token
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+</script>
+{% endblock %}

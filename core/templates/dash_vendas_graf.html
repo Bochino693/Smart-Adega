@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2 style="text-align:center; margin-bottom:20px; color:#d4af37;">Relatórios Gráficos de Vendas</h2>
+
+<!-- Filtro -->
+<div style="text-align:center; margin-bottom:20px;">
+  <form id="filtroForm" method="get" style="display:flex; justify-content:center; flex-wrap:wrap; gap:10px; align-items:center;">
+    <input type="hidden" id="periodo" name="periodo">
+
+    <input type="text" id="data_inicio" placeholder="De" value="{{ data_inicio }}"
+           style="padding:6px; border-radius:6px; border:1px solid #d4af37; background:#000; color:#fff; width:120px; text-align:center; cursor:pointer;" readonly>
+    <input type="text" id="data_fim" placeholder="Até" value="{{ data_fim }}"
+           style="padding:6px; border-radius:6px; border:1px solid #d4af37; background:#000; color:#fff; width:120px; text-align:center; cursor:pointer;" readonly>
+
+    <select name="dia_semana" style="padding:6px; border-radius:6px; border:1px solid #d4af37; background:#000; color:#d4af37; cursor:pointer;">
+      <option value="todos" {% if dia_semana == "todos" %}selected{% endif %}>Todos os dias</option>
+      <option value="segunda" {% if dia_semana == "segunda" %}selected{% endif %}>Segunda</option>
+      <option value="terca" {% if dia_semana == "terca" %}selected{% endif %}>Terça</option>
+      <option value="quarta" {% if dia_semana == "quarta" %}selected{% endif %}>Quarta</option>
+      <option value="quinta" {% if dia_semana == "quinta" %}selected{% endif %}>Quinta</option>
+      <option value="sexta" {% if dia_semana == "sexta" %}selected{% endif %}>Sexta</option>
+      <option value="sabado" {% if dia_semana == "sabado" %}selected{% endif %}>Sábado</option>
+      <option value="domingo" {% if dia_semana == "domingo" %}selected{% endif %}>Domingo</option>
+    </select>
+
+    <button type="submit"
+            style="padding:8px 14px; border:none; border-radius:6px; background:#d4af37; color:#000; font-weight:700; cursor:pointer;">
+      Filtrar
+    </button>
+  </form>
+</div>
+
+<div style="max-width:1000px; margin:0 auto; display:flex; flex-direction:column; gap:30px;">
+
+  <!-- Gráfico 1: Vendas por Dia -->
+<div style="background:#0b0b0b; padding:20px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.6); overflow-x:auto;">
+  <h3 style="color:#d4af37; margin-bottom:10px; text-align:center;">📅 Vendas por Dia</h3>
+
+  {% if mensagem %}
+    <p style="color:#e74c3c; text-align:center; font-weight:bold; margin-top:10px;">
+      {{ mensagem }}
+    </p>
+  {% else %}
+    <div id="columnchart_values" style="width:900px; height:400px;"></div>
+  {% endif %}
+</div>
+
+
+<!-- Gráfico 2 - Formas de Pagamento -->
+<div style="background:#0b0b0b; padding:20px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+    <h3 style="color:#d4af37; margin-bottom:10px; text-align:center;">💳 Vendas por Forma de Pagamento</h3>
+    {% if mensagem_pagamento %}
+      <p style="color:#e74c3c; text-align:center; font-weight:bold; margin-top:10px;">
+        {{ mensagem_pagamento }}
+      </p>
+    {% else %}
+      <!-- Gráfico 2 - Formas de Pagamento -->
+      <div id="formasPagamentoDiv" style="width:900px; height:400px; margin:0 auto;"></div>
+    {% endif %}
+</div>
+
+
+
+<!-- Gráfico 3: Top Usuários em Vendas -->
+<div style="background:#0b0b0b; padding:20px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
+    <h3 style="color:#d4af37; margin-bottom:10px; text-align:center;">👤 Top Usuários em Vendas</h3>
+    <div id="topUsuariosDiv" style="width:100%; height:400px;"></div>
+</div>
+
+
+</div> <!-- FECHA a div que envolve todos os gráficos -->
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- JS e CSS do Date Range Picker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+google.charts.load("current", {packages:['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
+google.charts.load('current', {packages:['corechart']});
+google.charts.setOnLoadCallback(drawTopUsuarios);
+function drawChart() {
+  var labels = {{ grafico_labels|safe }};
+  var values = {{ grafico_values|safe }};
+
+  // Definindo as 5 cores que se repetirão
+  var cores = ["#e74c3c", "#000000", "#ffffff", "#3498db", "#f39c12"];
+
+  // Colunas: Data, Vendas, Tooltip (HTML), Estilo
+  var dataArray = [["Data", "Vendas", { role: "tooltip", type: "string", p: { html: true } }, { role: "style" }]];
+
+  for (let i = 0; i < labels.length; i++) {
+    var cor = cores[i % cores.length];
+
+    // Tooltip padronizado igual Gráfico 2
+    var tooltip = '<div style="background:#111; color:#d4af37; padding:6px 10px; border-radius:6px; font-size:14px;">' +
+                  '<strong>' + labels[i] + '</strong><br>' +
+                  'Vendas: R$ ' + Math.round(values[i]).toLocaleString() +
+                  '</div>';
+
+    dataArray.push([labels[i], Math.round(values[i]), tooltip, cor]);
+  }
+
+  var data = google.visualization.arrayToDataTable(dataArray);
+
+  var view = new google.visualization.DataView(data);
+  view.setColumns([0, 1,
+                   { calc: "stringify",
+                     sourceColumn: 1,
+                     type: "string",
+                     role: "annotation" },
+                   3]); // estilo
+
+  var options = {
+    title: "Gráficos de Vendas por Dia",
+    width: "100%",
+    height: 400,
+    bar: {groupWidth: "85%"},
+    legend: { position: "none" },
+    backgroundColor: "#0b0b0b",
+    titleTextStyle: { color: "#d4af37", fontSize: 18, bold: true },
+    hAxis: { textStyle:{color:"#fff"} },
+    vAxis: { textStyle:{color:"#fff"}, format: '0' }, // números inteiros
+    tooltip: { isHtml: true } // ativa HTML no tooltip
+  };
+
+  var chart = new google.visualization.ColumnChart(document.getElementById("columnchart_values"));
+  chart.draw(view, options);
+}
+
+
+// Gráfico 2 - Formas de Pagamento
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawFormasPagamentoChart);
+
+function drawFormasPagamentoChart() {
+    var formasLabels = {{ formasLabels|safe }};
+    var formasData = {{ formasData|safe }};
+
+    // calcular total para porcentagem
+    var total = formasData.reduce((a, b) => a + b, 0);
+
+    // colunas: Label, Value, Tooltip (HTML)
+    var dataArray = [['Forma de Pagamento', 'Total', { role: 'tooltip', type: 'string', p: { html: true } }]];
+
+    for (var i = 0; i < formasLabels.length; i++) {
+        var label = formasLabels[i].replace('_', ' ').replace(/^\w/, c => c.toUpperCase());
+        var value = formasData[i];
+        var perc = total ? ((value / total) * 100).toFixed(1) : 0;
+
+        // tooltip HTML com fundo escuro e texto dourado
+        var tooltip = '<div style="background:#111; color:#d4af37; padding:6px 10px; border-radius:6px; font-size:14px;">' +
+                      '<strong>' + label + '</strong><br>' +
+                      'Total: ' + value.toLocaleString() + '<br>' +
+                      'Porcentagem: ' + perc + '%</div>';
+
+        dataArray.push([label, value, tooltip]);
+    }
+
+    var data = google.visualization.arrayToDataTable(dataArray);
+
+    var options = {
+        title: 'Formas de Pagamento',
+        titleTextStyle: { color: '#d4af37', fontSize: 18, bold: true },
+        backgroundColor: '#0b0b0b',
+        legend: { position: 'bottom', textStyle: { color: '#fff' } },
+        pieHole: 0.4,
+        tooltip: { isHtml: true }  // ativa HTML no tooltip
+    };
+
+    var chart = new google.visualization.PieChart(document.getElementById('formasPagamentoDiv'));
+    chart.draw(data, options);
+}
+
+// Gráfico 3 - Top Usuários
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawTopUsuarios);
+
+function drawTopUsuarios() {
+    var labels = {{ topLabels|safe }};
+    var values = {{ topValues|safe }};
+
+    var dataArray = [['Usuário', 'Total Vendido', { role: 'tooltip', type: 'string', p: { html: true } }]];
+    for (var i = 0; i < labels.length; i++) {
+        // tooltip personalizado com fundo escuro
+        var tooltip = '<div style="background:#111; color:#d4af37; padding:6px 10px; border-radius:6px; font-size:14px;">' +
+                      '<strong>' + labels[i] + '</strong><br>' +
+                      'Total Vendido: R$ ' + Math.round(values[i]) +
+                      '</div>';
+        dataArray.push([labels[i], Math.round(values[i]), tooltip]);
+    }
+
+    var data = google.visualization.arrayToDataTable(dataArray);
+
+    var options = {
+        title: 'Top Usuários em Vendas',
+        titleTextStyle: { color: '#d4af37', fontSize: 18, bold: true },
+        legend: { position: 'none' },
+        backgroundColor: '#0b0b0b',
+        colors: ['#d4af37'],
+        hAxis: { textStyle: { color: '#fff' } },
+        vAxis: {
+            textStyle: { color: '#fff' },
+            format: '0', // mostra números inteiros
+        },
+        chartArea: { width: '80%', height: '70%' },
+        tooltip: { isHtml: true } // ativa HTML no tooltip
+    };
+
+    var chart = new google.visualization.ColumnChart(document.getElementById('topUsuariosDiv'));
+    chart.draw(data, options);
+}
+
+
+
+
+
+// Date Range Picker
+$(function() {
+  var customLocale = {
+    format: 'DD/MM/YYYY',
+    applyLabel: "Selecionar",
+    cancelLabel: "Limpar",
+    daysOfWeek: ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"],
+    monthNames: [
+      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
+    ],
+    firstDay: 1
+  };
+
+  $('#data_inicio').daterangepicker({
+    singleDatePicker: true,
+    autoUpdateInput: false,
+    locale: customLocale
+  });
+
+  $('#data_fim').daterangepicker({
+    singleDatePicker: true,
+    autoUpdateInput: false,
+    locale: customLocale
+  });
+
+  $('#data_inicio, #data_fim').on('apply.daterangepicker', function(ev, picker) {
+    $(this).val(picker.startDate.format('DD/MM/YYYY'));
+  });
+  $('#data_inicio, #data_fim').on('cancel.daterangepicker', function(ev, picker) {
+    $(this).val('');
+  });
+
+  $('#filtroForm').on('submit', function(e) {
+    const inicio = $('#data_inicio').val();
+    const fim = $('#data_fim').val();
+    if (inicio && fim) {
+      $('#periodo').val(`${inicio} - ${fim}`);
+    }
+  });
+});
+
+
+</script>
+
+{% endblock %}

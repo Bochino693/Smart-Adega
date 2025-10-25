@@ -1,0 +1,193 @@
+{% extends "cab.html" %}
+
+{% block content %}
+<!-- CARD DE APRESENTAÇÃO - sempre visível -->
+<div class="modal-card">
+    <h2>Perfil do Usuário</h2>
+    <div class="user-card">
+        <p><strong>Nome:</strong> {{ user.first_name }} {{ user.last_name }}</p>
+        <p><strong>Username:</strong> {{ user.username }}</p>
+        <p><strong>E-mail:</strong> {{ user.email }}</p>
+
+        <div class="actions">
+            <button id="btnAbrirModal" class="btn-modern">✏️ Editar Dados</button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE EDIÇÃO - inicia escondido -->
+<div id="editarModal" class="card-container" style="display: none;">
+    <div class="card-centered card-form">
+        <h3 class="modal-nome">Editar Usuário</h3>
+        <form action="/atualizar_usuario" method="POST" class="edit-form">
+            {% csrf_token %}
+            <div class="form-group">
+                <label>Nome Completo</label>
+                <input type="text" name="nome" value="{{ user.first_name }} {{ user.last_name }}">
+            </div>
+            <div class="form-group">
+                <label>Nome de Usuário</label>
+                <input type="text" name="username" value="{{ user.username }}">
+            </div>
+            <div class="form-group">
+                <label>E-mail</label>
+                <input type="email" name="email" value="{{ user.email }}">
+            </div>
+            <div class="form-group senha-container">
+                <label>Senha</label>
+                <div style="position: relative; text-align:center;">
+                    <input type="password" id="password" name="password">
+                    <span class="toggle-olho" onclick="toggleSenha()" style="position:absolute; right:10px; top:50%; transform: translateY(-50%); cursor:pointer;">👁️</span>
+                </div>
+            </div>
+            <div class="card-buttons">
+                <button type="submit" class="btn-modern btn-save">💾 Salvar</button>
+                <button type="button" class="btn-modern btn-close" onclick="document.getElementById('editarModal').style.display='none'">Fechar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+const btnAbrirModal = document.getElementById('btnAbrirModal');
+const modal = document.getElementById('editarModal');
+
+btnAbrirModal.addEventListener('click', () => {
+    modal.style.display = 'flex';
+});
+
+// Fecha ao clicar fora do card
+window.addEventListener('click', e => {
+    if(e.target === modal){
+        modal.style.display = 'none';
+    }
+});
+
+// Mostrar/ocultar senha
+function toggleSenha(){
+    const senha = document.getElementById('password');
+    senha.type = senha.type === 'password' ? 'text' : 'password';
+}
+</script>
+
+{% endblock %}
+
+{% block head %}
+
+<style>
+
+/* ===== CARD DE APRESENTAÇÃO - sempre visível ===== */
+.modal-card {
+    background: #1f1f1f;
+    color: #fff;
+    border-radius: 20px;
+    padding: 30px 25px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    border: 2px solid #ffd700;        /* borda destacada */
+    box-shadow: 0 12px 35px rgba(0,0,0,0.6);
+    margin: 50px auto;                 /* centralizado horizontalmente */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+     margin-bottom: 12px; /* distância entre os parágrafos */
+}
+.modal-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 45px rgba(0,0,0,0.7);
+}
+.modal-card h2 {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #ffd700;
+    text-align: center;
+}
+
+/* ===== BOTÕES ===== */
+.btn-modern {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-save { background: #27ae60; color: #fff; }
+.btn-save:hover { background: #1e8449; }
+.btn-close { background: #718093; color: #fff; }
+.btn-close:hover { background: #95a5a6; }
+
+/* CONTAINER MODAL */
+.card-container {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0,0,0,0.6);
+    z-index: 1000;
+}
+
+/* CARD DO MODAL */
+.card-centered {
+    background: #1f1f1f;
+    color: #fff;
+    border-radius: 18px;
+    padding: 35px 30px;
+    max-width: 550px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+    border: 1px solid #333;
+}
+
+/* FORMULÁRIO */
+.card-form .form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 15px;
+}
+.card-form .form-group label {
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #ffd700;
+}
+.card-form .form-group input {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #444;
+    background: #2c2c2c;
+    color: #f5f5f5;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* ÍCONE OLHINHO */
+.senha-container input {
+    padding-right: 45px;
+}
+.toggle-olho:hover { color: #ffd700; }
+
+/* ÍCONE FECHAR */
+.card-close {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    font-size: 26px;
+    cursor: pointer;
+    color: #d4af37;
+}
+.card-close:hover { color: #ffd700; }
+
+.card-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 20px;
+}
+</style>
+
+{% endblock %}

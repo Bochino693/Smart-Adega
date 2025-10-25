@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="background:#fff; padding:30px; border-radius:12px; max-width:1200px; margin:0 auto; box-shadow:0 6px 20px rgba(0,0,0,0.1);">
+    <h2 style="color:#d4af37; text-align:center; margin-bottom:20px;">📦 Saídas de Estoque</h2>
+
+    <!-- Filtro de datas -->
+<form method="get" style="margin-bottom:20px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <div>
+        <label style="color:#000;">De:</label>
+        <input type="date" name="start_date" value="{{ request.GET.start_date }}"
+               style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+    </div>
+    <div>
+        <label style="color:#000;">Até:</label>
+        <input type="date" name="end_date" value="{{ request.GET.end_date }}"
+               style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+    </div>
+
+    <button type="submit"
+            style="background:#d4af37; color:#000; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">
+        Filtrar
+    </button>
+
+    {% if request.GET.start_date or request.GET.end_date %}
+        <a href="{% url 'dash_stock' %}"
+           style="padding:5px 15px; border-radius:5px; background:#e74c3c; color:#fff; text-decoration:none;">
+            Limpar
+        </a>
+    {% endif %}
+</form>
+
+
+    {% if saidas %}
+    <table style="width:100%; border-collapse:collapse; text-align:left; background:#fff;">
+        <thead style="background:#000;">
+            <tr>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Produto</th>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Código</th>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Quantidade</th>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Data de Saída</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in saidas %}
+            <tr class="saida-row" style="cursor:pointer; color:#000; border-bottom:1px solid #d4af37;"
+                data-bs-toggle="modal" data-bs-target="#modal{{ item.id }}">
+                <td style="padding:10px;">{{ item.nome_produto }}</td>
+                <td style="padding:10px;">{{ item.codigo_produto }}</td>
+                <td style="padding:10px;">{{ item.quantidade }}</td>
+                <td style="padding:10px;">{{ item.data_saida|date:"d/m/Y H:i" }}</td>
+            </tr>
+
+           <!-- Modal Principal do item -->
+<div class="modal fade" id="modal{{ item.id }}" tabindex="-1" aria-labelledby="modalLabel{{ item.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#111; color:#d4af37; border:2px solid #d4af37;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalLabel{{ item.id }}">{{ item.nome_produto }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <p><strong>Código:</strong> {{ item.codigo_produto }}</p>
+        <p><strong>Quantidade:</strong> {{ item.quantidade }}</p>
+        <p><strong>Data de Saída:</strong> {{ item.data_saida|date:"d/m/Y H:i" }}</p>
+        <!-- Outras informações ou histórico -->
+      </div>
+      <div class="modal-footer">
+        <!-- Botão de Editar -->
+        <button type="button" class="btn" style="background:#d4af37; color:#000;"
+                data-bs-toggle="modal" data-bs-target="#editModal{{ item.id }}">
+          Editar
+        </button>
+
+        <!-- Botão de Remover/Retirar -->
+        <button type="button" class="btn btn-danger"
+                data-bs-toggle="modal" data-bs-target="#removeModal{{ item.id }}">
+          Remover
+        </button>
+
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edição -->
+<div class="modal fade" id="editModal{{ item.id }}" tabindex="-1" aria-labelledby="editModalLabel{{ item.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#111; color:#d4af37; border:2px solid #d4af37;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="editModalLabel{{ item.id }}">Editar {{ item.nome_produto }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'editar_saida' item.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Produto</label>
+            <input type="text" name="nome_produto" value="{{ item.nome_produto }}" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label>Código</label>
+            <input type="text" name="codigo_produto" value="{{ item.codigo_produto }}" class="form-control">
+          </div>
+          <div class="mb-3">
+            <label>Quantidade</label>
+            <input type="number" name="quantidade" value="{{ item.quantidade }}" class="form-control">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" class="btn" style="background:#d4af37; color:#000;">Salvar</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<!-- Modal de Remoção/Ajuste -->
+<div class="modal fade" id="removeModal{{ item.id }}" tabindex="-1" aria-labelledby="removeModalLabel{{ item.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background:#111; color:#d4af37; border:2px solid #d4af37;">
+      <div class="modal-header">
+        <h5 class="modal-title" id="removeModalLabel{{ item.id }}">Remover unidades de {{ item.nome_produto }}</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'remover_saida' item.id %}">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label>Quantidade a remover (máx: {{ item.quantidade }})</label>
+            <input type="number" name="quantidade_remover" max="{{ item.quantidade }}" class="form-control" value="0">
+          </div>
+          <p>Ou clique em "Remover todas" para apagar todas as unidades deste item.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="submit" name="remover_todas" value="true" class="btn btn-danger">Remover todas</button>
+          <button type="submit" class="btn btn-warning">Remover quantidade</button>
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="color:#e74c3c; text-align:center; font-weight:bold;">Nenhuma saída de estoque encontrada.</p>
+    {% endif %}
+</div>
+
+<style>
+    .saida-row:hover {
+        background: #fdf6e3;
+        color: #000;
+        transition: background 0.3s;
+    }
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Para cada botão de abrir modal secundário
+    document.querySelectorAll('[data-bs-toggle="modal"]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            var target = btn.getAttribute('data-bs-target');
+            var parentModal = btn.closest('.modal');
+            if (parentModal) {
+                // Fecha o modal pai antes de abrir o modal secundário
+                var modalInstance = bootstrap.Modal.getInstance(parentModal);
+                modalInstance.hide();
+            }
+        });
+    });
+
+    // Quando qualquer modal fechar, remove backdrop residual
+    document.querySelectorAll('.modal').forEach(function(modalEl) {
+        modalEl.addEventListener('hidden.bs.modal', function() {
+            var backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(function(backdrop) {
+                backdrop.remove();
+            });
+            document.body.classList.remove('modal-open');
+        });
+    });
+});
+
+
+</script>
+{% endblock %}

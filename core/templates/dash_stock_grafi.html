@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="background:#fff; padding:30px; border-radius:12px; max-width:1200px; margin:0 auto; box-shadow:0 6px 20px rgba(0,0,0,0.1);">
+    <h2 style="color:#d4af37; text-align:center; margin-bottom:20px;">📊 Gráfico de Saídas de Estoque por Produto</h2>
+
+    <!-- Filtro -->
+    <form method="get" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:20px;">
+        <div>
+            <label style="color:#000;">Período:</label>
+            <select name="period" style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+                <option value="todos" {% if request.GET.period == 'todos' %}selected{% endif %}>Todos</option>
+                <option value="hoje" {% if request.GET.period == 'hoje' %}selected{% endif %}>Hoje</option>
+                <option value="7dias" {% if request.GET.period == '7dias' %}selected{% endif %}>Últimos 7 dias</option>
+                <option value="15dias" {% if request.GET.period == '15dias' %}selected{% endif %}>Últimos 15 dias</option>
+                <option value="1mes" {% if request.GET.period == '1mes' %}selected{% endif %}>Último mês</option>
+            </select>
+        </div>
+
+        <div>
+            <label style="color:#000;">De:</label>
+            <input type="date" name="start_date" value="{{ request.GET.start_date }}" style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+        </div>
+        <div>
+            <label style="color:#000;">Até:</label>
+            <input type="date" name="end_date" value="{{ request.GET.end_date }}" style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+        </div>
+
+        <button type="submit" style="background:#d4af37; color:#000; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">Filtrar</button>
+        {% if request.GET.start_date or request.GET.end_date or request.GET.period %}
+            <a href="{% url 'dash_stock_grafico' %}" style="padding:5px 15px; border-radius:5px; background:#e74c3c; color:#fff; text-decoration:none;">Limpar</a>
+        {% endif %}
+    </form>
+
+    <!-- Gráfico -->
+    <div id="saidaEstoqueChart" style="width:100%; height:500px;"></div>
+</div>
+
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
+function drawChart() {
+    var labels = {{ labels|safe }};
+    var values = {{ values|safe }};
+
+    // Array inicial com colunas: Produto, Quantidade, Style (cor)
+    var dataArray = [['Produto', 'Quantidade', { role: 'style' }]];
+
+    var colors = [
+        '#d4af37', '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728',
+        '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22',
+        '#17becf', '#f39c12', '#e74c3c', '#9b59b6', '#34495e'
+    ];
+
+    for (var i = 0; i < labels.length; i++) {
+        var color = colors[i % colors.length]; // repete as cores se mais de 15
+        dataArray.push([labels[i], values[i], color]);
+    }
+
+    var data = google.visualization.arrayToDataTable(dataArray);
+
+    var options = {
+        title: 'Saídas de Estoque por Produto',
+        backgroundColor: '#fff',
+        titleTextStyle: { color: '#d4af37', fontSize: 18, bold: true },
+        hAxis: { textStyle: { color: '#000' } },
+        vAxis: { textStyle: { color: '#000' }, minValue: 0 },
+        legend: { position: 'none' },
+        tooltip: { isHtml: true }
+    };
+
+    var chart = new google.visualization.ColumnChart(document.getElementById('saidaEstoqueChart'));
+    chart.draw(data, options);
+}
+</script>
+
+{% endblock %}

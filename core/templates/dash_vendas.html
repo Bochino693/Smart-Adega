@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<h2 style="text-align:center; margin-bottom:20px; color:#d4af37;">Relatório de Vendas</h2>
+
+<!-- 🔹 Container centralizado do filtro -->
+<form id="filtroForm" method="GET"
+      style="display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
+             gap:10px; background:#111; padding:14px; border-radius:8px;
+             box-shadow:0 0 12px rgba(0,0,0,0.6); max-width:800px; margin:20px auto;">
+
+  <input type="text" id="data_inicio" placeholder="De"
+         value="{{ data_inicio|default_if_none:'' }}"
+         style="padding:8px; border-radius:6px; border:1px solid #d4af37;
+                background:#000; color:#fff; width:130px; text-align:center; cursor:pointer;" readonly>
+
+  <input type="text" id="data_fim" placeholder="Até"
+         value="{{ data_fim|default_if_none:'' }}"
+         style="padding:8px; border-radius:6px; border:1px solid #d4af37;
+                background:#000; color:#fff; width:130px; text-align:center; cursor:pointer;" readonly>
+
+  <input type="hidden" id="periodo" name="periodo">
+
+
+  <select name="forma_pagamento"
+          style="padding:8px; border-radius:6px; border:1px solid #d4af37;
+                 background:#000; color:#fff; cursor:pointer;">
+      <option value="" {% if not forma_pagamento_filtro %}selected{% endif %}>Todas as Formas</option>
+      {% for key, label in formas_pagamento_choices %}
+          <option value="{{ key }}" {% if forma_pagamento_filtro == key %}selected{% endif %}>
+              {{ label }}
+          </option>
+      {% endfor %}
+  </select>
+
+  <select name="status_pagamento"
+          style="padding:8px; border-radius:6px; border:1px solid #d4af37;
+                 background:#000; color:#fff; cursor:pointer;">
+    <option value="todos" {% if status_pagamento == "todos" %}selected{% endif %}>Todos</option>
+    <option value="pagas" {% if status_pagamento == "pagas" %}selected{% endif %}>Pagas</option>
+    <option value="pendentes" {% if status_pagamento == "pendentes" %}selected{% endif %}>Pendentes</option>
+  </select>
+
+  <button type="submit"
+          style="padding:8px 16px; border:none; border-radius:6px;
+                 background:#d4af37; color:#000; font-weight:700; cursor:pointer;">
+    Filtrar
+  </button>
+</form>
+
+<!-- Dependências do daterangepicker -->
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+<!-- Tabela -->
+<div style="overflow-x:auto; margin: 0 auto; max-width: 1200px; position: relative;">
+  <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif;
+                box-shadow: 0 8px 30px rgba(0,0,0,0.35); border-radius:8px; overflow:hidden;">
+    <thead style="background-color:#000; color:#d4af37;">
+      <tr>
+        <th style="padding:14px; text-align:center;">Identificador</th>
+        <th style="padding:14px; text-align:center;">Usuário</th>
+        <th style="padding:14px; text-align:center;">Desconto Total</th>
+        <th style="padding:14px; text-align:center;">Valor Líquido</th>
+        <th style="padding:14px; text-align:center;">Valor Bruto</th>
+        <th style="padding:14px; text-align:center;">Forma de Pagamento</th>
+        <th style="padding:14px; text-align:center;">Data</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for venda in vendas %}
+      <tr class="venda-row"
+          data-id="{{ venda.id }}"
+          data-usuario="{{ venda.usuario.username|default:'Anônimo' }}"
+          data-forma="{{ venda.get_forma_pagamento_display }}"
+          data-desconto="{{ venda.desconto_total|floatformat:2 }}"
+          data-liquido="{{ venda.valor_liquido|floatformat:2 }}"
+          data-bruto="{{ venda.valor_bruto|floatformat:2 }}"
+          data-data="{{ venda.data|date:'d/m/Y H:i' }}"
+          data-itens='{{ vendas_itens_json|safe }}'
+          style="background-color:#000; color:#fff; cursor:pointer; transition:background-color 0.3s;">
+        <td style="padding:12px; text-align:center;">{{ venda.id }}</td>
+        <td style="padding:12px; text-align:center;">{{ venda.usuario.username|default:"Anônimo" }}</td>
+        <td style="padding:12px; text-align:center; color:#d4af37; font-weight:700;">
+            R$ {{ venda.desconto_total|floatformat:2 }}
+        </td>
+        <td style="padding:12px; text-align:center;">R$ {{ venda.valor_liquido|floatformat:2 }}</td>
+        <td style="padding:12px; text-align:center;">R$ {{ venda.valor_bruto|floatformat:2 }}</td>
+        <td style="padding:12px; text-align:center;">{{ venda.get_forma_pagamento_display }}</td>
+        <td style="padding:12px; text-align:center;">{{ venda.data|date:"d/m/Y H:i" }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" style="text-align:center; padding:20px; color:#d4af37; font-weight:700;">
+          Nenhuma venda encontrada no período.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+     <!-- Linha Totais fixa -->
+<div style="
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: #111;
+  color: #d4af37;
+  font-weight: 700;
+  box-shadow: 0 -3px 8px rgba(0,0,0,0.4);
+  text-align: center;
+  padding: 12px;
+  z-index: 9999;
+">
+  Totais filtrados —
+  <span style="margin-right:20px;">Total Bruto: R$ {{ total_bruto|floatformat:2 }}</span>
+  <span>Total Líquido: R$ {{ total_liquido|floatformat:2 }}</span>
+</div>
+
+
+<!-- 🔹 Scripts necessários -->
+<link rel="stylesheet" type="text/css"
+      href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+
+
+<!-- 🔹 Modal -->
+<div id="modalVenda"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:9999;">
+  <div style="background:#111; color:#fff; padding:20px; border-radius:10px; width:90%; max-width:700px;
+              box-shadow:0 0 20px rgba(0,0,0,0.6); position:relative;">
+    <span id="closeModal" style="position:absolute; top:10px; right:15px; cursor:pointer;
+                                 font-size:24px; color:#d4af37;">×</span>
+    <h3 style="color:#d4af37; text-align:center; margin-bottom:10px;">Detalhes da Venda</h3>
+    <div id="infoVenda" style="margin-bottom:20px;"></div>
+
+     <!-- Botão para quitar pendência -->
+    <div id="btnQuitarContainer" style="margin-bottom:10px; text-align:center;"></div>
+
+    <table style="width:100%; border-collapse:collapse;">
+      <thead>
+        <tr style="color:#d4af37;">
+          <th style="padding:8px; text-align:left;">Produto</th>
+          <th style="padding:8px; text-align:center;">Qtd</th>
+          <th style="padding:8px; text-align:center;">Preço Unitário</th>
+          <th style="padding:8px; text-align:center;">Desconto</th>
+          <th style="padding:8px; text-align:center;">Total</th>
+        </tr>
+      </thead>
+      <tbody id="tabelaItens"></tbody>
+    </table>
+  </div>
+</div>
+
+
+
+<div id="modalPagamento"
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+            background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:10000;">
+  <div style="background:#111; color:#fff; padding:20px; border-radius:10px; width:90%; max-width:400px;
+              box-shadow:0 0 20px rgba(0,0,0,0.6); position:relative; text-align:center;">
+    <span id="closeModalPagamento" style="position:absolute; top:10px; right:15px; cursor:pointer;
+                                 font-size:24px; color:#d4af37;">×</span>
+    <h3 style="color:#d4af37; margin-bottom:20px;">Escolha a forma de pagamento</h3>
+    <select id="novaFormaPagamento" style="width:80%; padding:5px; margin-bottom:20px;">
+      <option value="pix">PIX</option>
+      <option value="cartao_credito">Cartão de Crédito</option>
+      <option value="cartao_debito">Cartão de Débito</option>
+      <option value="dinheiro">Dinheiro</option>
+      <option value="pix_qrcode">Pix (QR code)</option>
+    </select>
+    <br>
+    <button id="confirmarPagamento" style="padding:8px 15px; background:#d4af37; border:none; cursor:pointer;">Confirmar</button>
+  </div>
+</div>
+
+
+
+<script>
+$(function() {
+  // 1. ✅ CORREÇÃO: Defina o limite máximo como o FIM do dia atual.
+  // Isso garante que o dia de hoje (até 23:59:59) seja selecionável sem ambiguidades.
+  const maxLimit = moment().endOf('day');
+
+  // Use moment() para o startDate, para que o calendário abra no mês atual
+  const today = moment();
+
+  // Configuração de idioma/locale (sem alterações)
+  const localeConfig = {
+    format: 'DD/MM/YYYY',
+    applyLabel: 'Selecionar',
+    cancelLabel: 'Limpar',
+    daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+    monthNames: [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+    ],
+    firstDay: 1
+  };
+
+  // 2. ✨ MELHORIA: Aplica o daterangepicker para ambos os campos de uma vez
+  $('#data_inicio, #data_fim').daterangepicker({
+    singleDatePicker: true,
+    showDropdowns: true,
+    autoUpdateInput: false, // Ótima prática para controle manual
+    locale: localeConfig,
+    opens: 'center',
+    maxDate: maxLimit,      // Usando a nova data máxima corrigida
+    startDate: today
+  })
+  // Função para atualizar o valor do input quando uma data é escolhida
+  .on('apply.daterangepicker', function(ev, picker) {
+    $(this).val(picker.chosenDate.format('DD/MM/YYYY'));
+  })
+  // Função para limpar o valor do input quando se clica em "Limpar"
+  .on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val('');
+  });
+
+
+  // 🔸 Monta o campo "periodo" antes de enviar (sem alterações)
+  $('#filtroForm').on('submit', function() {
+    const inicio = $('#data_inicio').val();
+    const fim = $('#data_fim').val();
+
+    if (inicio && fim) {
+      $('#periodo').val(`${inicio} - ${fim}`);
+    } else {
+      $('#periodo').val('');
+    }
+  });
+});
+
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("modalVenda");
+  const closeModal = document.getElementById("closeModal");
+  const infoVenda = document.getElementById("infoVenda");
+  const tabelaItens = document.getElementById("tabelaItens");
+  const btnQuitarContainer = document.getElementById("btnQuitarContainer");
+
+  const modalPagamento = document.getElementById("modalPagamento");
+  const closeModalPagamento = document.getElementById("closeModalPagamento");
+  const confirmarPagamento = document.getElementById("confirmarPagamento");
+  const novaFormaPagamento = document.getElementById("novaFormaPagamento");
+
+  let vendaAtualId = null;
+
+  document.querySelectorAll(".venda-row").forEach(row => {
+    row.addEventListener("click", () => {
+      vendaAtualId = row.dataset.id;
+      const usuario = row.dataset.usuario;
+      const forma = row.dataset.forma;
+      const desconto = row.dataset.desconto;
+      const liquido = row.dataset.liquido;
+      const bruto = row.dataset.bruto;
+      const data = row.dataset.data;
+      const todasVendasItens = JSON.parse(row.dataset.itens || "{}");
+      const itens = todasVendasItens[vendaAtualId] || [];
+
+      // Informações da venda
+      infoVenda.innerHTML = `
+        <p><strong>ID:</strong> ${vendaAtualId}</p>
+        <p><strong>Usuário:</strong> ${usuario}</p>
+        <p><strong>Forma de Pagamento:</strong> ${forma}</p>
+        <p><strong>Desconto Total:</strong> R$ ${desconto}</p>
+        <p><strong>Valor Bruto:</strong> R$ ${bruto}</p>
+        <p><strong>Valor Líquido:</strong> R$ ${liquido}</p>
+        <p><strong>Data:</strong> ${data}</p>
+      `;
+
+      // Monta tabela de itens
+      tabelaItens.innerHTML = "";
+if (itens.length > 0) {
+  itens.forEach(item => {
+    tabelaItens.insertAdjacentHTML("beforeend", `
+      <tr style="border-top:1px solid #333;">
+        <td style="padding:8px;">${item.produto}</td>
+        <td style="padding:8px; text-align:center;">${item.quantidade}</td>
+        <td style="padding:8px; text-align:center;">R$ ${item.valor_unitario.toFixed(2)}</td>
+        <td style="padding:8px; text-align:center;">R$ ${item.desconto.toFixed(2)}</td>
+        <td style="padding:8px; text-align:center; color:#d4af37; font-weight:600;">R$ ${item.valor_total.toFixed(2)}</td>
+      </tr>
+    `);
+  });
+} else {
+  tabelaItens.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:10px;">Sem itens nesta venda.</td></tr>`;
+}
+
+      // Botão de quitar pendência
+      btnQuitarContainer.innerHTML = "";
+      if (forma.toLowerCase() === "pendente") {
+        btnQuitarContainer.innerHTML = `<button id="btnQuitar" style="padding:8px 15px; background:#d4af37; border:none; cursor:pointer;">Quitar Pendência</button>`;
+        document.getElementById("btnQuitar").addEventListener("click", () => {
+          modalPagamento.style.display = "flex";
+        });
+      }
+
+      modal.style.display = "flex";
+    });
+  });
+
+  // Fechar modais
+  closeModal.addEventListener("click", () => modal.style.display = "none");
+  closeModalPagamento.addEventListener("click", () => modalPagamento.style.display = "none");
+
+  // Confirmar nova forma de pagamento
+  confirmarPagamento.addEventListener("click", () => {
+    const formaEscolhida = novaFormaPagamento.value;
+    if (!vendaAtualId) return;
+
+    fetch(`/venda/quitar/${vendaAtualId}/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken")
+      },
+      body: JSON.stringify({ forma_pagamento: formaEscolhida })
+    }).then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert("Venda quitada com sucesso!");
+          location.reload(); // atualiza a página para refletir mudanças
+        } else {
+          alert("Erro ao quitar a venda!");
+        }
+      });
+
+    modalPagamento.style.display = "none";
+  });
+
+  // Função auxiliar para pegar CSRF
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+});
+
+
+</script>
+
+
+<style>
+
+  .venda-row:hover {
+    background-color: #222 !important;
+    transform: scale(1.01);
+  }
+
+
+.campo-data {
+  padding:6px;
+  border-radius:6px;
+  border:1px solid #d4af37;
+  background:#000;
+  color:#fff;
+  width:120px;
+  text-align:center;
+  cursor:pointer;
+  transition:0.3s;
+}
+.campo-data:hover {
+  background:#111;
+  border-color:#ffd700;
+}
+.venda-row {
+  background:#0a0a0a;
+  color:#fff;
+  transition: background 0.2s ease;
+  cursor:pointer;
+}
+.venda-row:hover {
+  background:#1a1a1a;
+}
+.modal {
+  display:none;
+  position:fixed;
+  z-index:9999;
+  left:0; top:0;
+  width:100%; height:100%;
+  background:rgba(0,0,0,0.8);
+  overflow:auto;
+}
+.modal-content {
+  background:#111;
+  margin:5% auto;
+  padding:20px;
+  border-radius:10px;
+  width:90%;
+  max-width:700px;
+  color:#fff;
+  box-shadow:0 0 20px rgba(0,0,0,0.8);
+}
+.modal-table-wrapper {
+  max-height:400px;
+  overflow-y:auto;
+}
+.close-btn {
+  float:right;
+  color:#d4af37;
+  font-size:28px;
+  cursor:pointer;
+}
+.close-btn:hover {
+  color:#fff;
+}
+.modal-table {
+  width:100%;
+  border-collapse:collapse;
+  margin-top:15px;
+}
+.modal-table th, .modal-table td {
+  border-bottom:1px solid #333;
+  padding:8px;
+  text-align:center;
+}
+.modal-table th {
+  background:#000;
+  color:#d4af37;
+}
+</style>
+
+{% endblock %}
+

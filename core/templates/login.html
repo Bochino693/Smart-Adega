@@ -1,0 +1,99 @@
+{% extends 'cab.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+/* Centraliza o card */
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+}
+
+/* Card moderno */
+.login-card {
+    background: #1c1c1c;
+    padding: 40px 30px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
+    color: #fff;
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 25px;
+    color: #d4af37;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.login-card label {
+    font-weight: bold;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 15px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    background-color: #111;
+    color: #ffd700;
+}
+
+.login-card button {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 1rem;
+    background-color: #d4af37;
+    color: #111;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.login-card button:hover {
+    background-color: #ffd700;
+}
+
+.login-card .error {
+    background-color: #ff4d4d;
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: bold;
+    color: #fff;
+}
+</style>
+
+<div class="login-container">
+    <div class="login-card">
+        <h2>Login</h2>
+        
+        {% if form.errors %}
+        <div class="error">
+            Usuário ou senha inválidos
+        </div>
+        {% endif %}
+
+        <form method="post">
+            {% csrf_token %}
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" placeholder="Digite seu username" required autofocus>
+
+            <label for="password">Senha</label>
+            <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
+
+            <button type="submit">Entrar</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

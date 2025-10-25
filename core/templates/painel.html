@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="flex justify-center bg-gray-100 min-h-screen py-16 px-4">
+    <div class="w-full max-w-6xl flex flex-col items-center space-y-16">
+
+        <!-- Título Principal -->
+        <h1 class="text-4xl md:text-5xl font-extrabold text-center text-yellow-500">
+            📊 Sistema de Estoque e Vendas
+        </h1>
+
+        <!-- Introdução / Guia -->
+        <div class="bg-white rounded-3xl shadow-xl p-10 w-full max-w-4xl text-center space-y-6">
+            <h2 class="text-2xl font-semibold">Bem-vindo ao sistema!</h2>
+            <p class="text-gray-700">
+                Gerencie estoque, vendas e saídas de produtos de forma eficiente. É fundamental que certas
+                <strong>categorias de produtos</strong> existam no banco de dados:
+            </p>
+            <ul class="list-disc list-inside text-gray-700 space-y-2">
+                <li><strong>Doses</strong> – Produtos vendidos por dose individual.</li>
+                <li><strong>Combos</strong> – Conjuntos de produtos vendidos juntos.</li>
+                <li><strong>Fracionados</strong> – Produtos vendidos em quantidades parciais, sempre gerando saída no estoque.</li>
+                <li><strong>Gelos</strong> – Produtos usados como insumo em outras vendas (não vendidos diretamente ao cliente).</li>
+            </ul>
+            <p class="text-gray-700">
+                O sistema também registra vendas, aplica descontos e taxas automaticamente. Use a
+                <strong>área administrativa</strong> para gerenciar produtos, categorias e saídas.
+            </p>
+        </div>
+
+        <!-- Guias Visuais -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+            <div class="bg-white rounded-3xl shadow-lg p-6 hover:shadow-2xl transition duration-300 text-center">
+                <h3 class="text-xl font-semibold mb-3 flex items-center justify-center gap-2">📦 Estoque</h3>
+                <p class="text-gray-700">
+                    Cadastre produtos, controle quantidades e monitore saídas. Produtos vendidos geram automaticamente
+                    registros na tabela <strong>Saída de Estoque</strong>.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-lg p-6 hover:shadow-2xl transition duration-300 text-center">
+                <h3 class="text-xl font-semibold mb-3 flex items-center justify-center gap-2">💰 Vendas</h3>
+                <p class="text-gray-700">
+                    Cada venda registra itens, forma de pagamento, descontos e calcula o valor líquido. Produtos da categoria
+                    <strong>Fracionados</strong> sempre geram saída de estoque, mesmo sem estoque físico.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-lg p-6 hover:shadow-2xl transition duration-300 text-center">
+                <h3 class="text-xl font-semibold mb-3 flex items-center justify-center gap-2">📊 Dashboards</h3>
+                <p class="text-gray-700">
+                    Visualize vendas por produto, categoria e forma de pagamento. Gere gráficos de tendência para análise de demanda histórica.
+                </p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-lg p-6 hover:shadow-2xl transition duration-300 text-center">
+                <h3 class="text-xl font-semibold mb-3 flex items-center justify-center gap-2">⚙️ Administração</h3>
+                <p class="text-gray-700">
+                    Use a <strong>área administrativa</strong> do Django para cadastrar produtos, categorias, usuários e revisar históricos.
+                    Nunca remova categorias essenciais como <strong>Doses</strong>, <strong>Combos</strong>, <strong>Fracionados</strong> e <strong>Gelos</strong>.
+                </p>
+            </div>
+        </div>
+
+        <!-- Aviso Final -->
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 p-6 rounded-2xl text-center shadow-inner max-w-4xl">
+            <p class="font-semibold text-lg">
+                ⚠️ Atenção: Para o correto funcionamento do sistema, as categorias essenciais não podem ser removidas.
+                Sempre mantenha produtos corretamente categorizados.
+            </p>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

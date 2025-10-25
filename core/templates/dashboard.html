@@ -1,0 +1,104 @@
+{% extends 'cab.html' %}
+{% load static %}
+
+{% block content %}
+<style>
+    .dashboard {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-top: 30px;
+    }
+    .card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        text-align: center;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+    }
+    .card img {
+        width: 60px;
+        height: 60px;
+        object-fit: contain;
+        margin-bottom: 10px;
+    }
+    .card h3 {
+        margin: 10px 0 8px 0;
+        color: #333;
+    }
+    .card p {
+        color: #777;
+        font-size: 14px;
+    }
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        margin-top: 30px;
+        justify-content: center;
+    }
+    .quick-actions a {
+        background: #000;
+        color: #d4af37;
+        padding: 12px 18px;
+        border-radius: 6px;
+        font-weight: bold;
+        text-decoration: none;
+        transition: background 0.2s ease;
+    }
+    .quick-actions a:hover {
+        background: #333;
+    }
+</style>
+
+<h2 style="text-align:center; margin-top: 20px;">📈 Painel de Relatórios e Estatísticas</h2>
+
+{% if not user.is_authenticated %}
+<div class="alert alert-warning text-center" role="alert" style="margin-top:20px;">
+    🔒 Você precisa <a href="{% url 'login' %}">fazer login</a> para acessar o painel.
+</div>
+{% elif not user.is_staff %}
+<div class="alert alert-danger text-center" role="alert" style="margin-top:20px;">
+    🚫 Você não tem permissão para acessar esta área.
+</div>
+{% else %}
+
+<p style="text-align:center; color: #666;">Analise os dados e tenha insights para melhores decisões</p>
+
+<!-- Painel de Cards -->
+<div class="dashboard">
+    <div class="card">
+        <img src="{% static 'images/img_2.png' %}" alt="Mais Vendidos">
+        <h3>Painel principal</h3>
+        <p>Descubra quais itens têm mais saída.</p>
+        <a href="{% url 'painel' %}" style="display:inline-block; margin-top:10px; color: #d4af37; font-weight:bold;">Ver Detalhes</a>
+    </div>
+    <div class="card">
+        <img src="{% static 'images/img_4.png' %}" alt="Baixo Estoque">
+        <h3>Acompanhe a Saída de produtos</h3>
+        <p>Identifique itens que precisam reposição urgente.</p>
+        <a href="{% url 'dash_stock' %} " style="display:inline-block; margin-top:10px; color: #d4af37; font-weight:bold;">Ver Detalhes</a>
+    </div>
+    <div class="card">
+        <img src="{% static 'images/img_3.png' %}" alt="Relatórios de Vendas">
+        <h3>Relatórios de Vendas</h3>
+        <p>Acompanhe o desempenho das vendas em tempo real.</p>
+        <a href="{% url 'dash_vendas' %}" style="display:inline-block; margin-top:10px; color: #d4af37; font-weight:bold;">Ver Detalhes</a>
+    </div>
+</div>
+
+<!-- Ações Rápidas -->
+<div class="quick-actions">
+    <a href="{% url 'dash_vendas_graficos' %}">📊 Estatísticas das Vendas</a>
+    <a href="{% url 'dashboard_estoque' %}">📊 Estatísticas dos Produtos</a>
+    <a href="{% url 'dash_vendas_graficos' %}">📉 Baixo Estoque</a>
+</div>
+
+{% endif %}
+
+{% endblock %}

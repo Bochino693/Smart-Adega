@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="register-container" style="max-width:450px; margin:50px auto; padding:30px; background:#f5f5f5; border-radius:10px; box-shadow:0 4px 12px rgba(0,0,0,0.1); font-family:Arial, sans-serif;">
+    <h2 style="text-align:center; color:#d4af37; margin-bottom:20px;">Criar Usuário</h2>
+
+    <form method="POST" action="{% url 'usuario_criar' %}" autocomplete="off">
+        {% csrf_token %}
+
+        <!-- Username -->
+        <div class="form-group" style="margin-bottom:15px;">
+            <label for="username" style="font-weight:bold;">Nome de Usuário</label>
+            <input type="text" name="username" id="username" placeholder="Digite o nome de usuário"
+                   required autocomplete="off"
+                   style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc; box-sizing:border-box;">
+        </div>
+
+        <!-- First Name -->
+        <div class="form-group" style="margin-bottom:15px;">
+            <label for="first_name" style="font-weight:bold;">Primeiro Nome</label>
+            <input type="text" name="first_name" id="first_name" placeholder="Digite o primeiro nome"
+                   required autocomplete="off"
+                   style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc;">
+        </div>
+
+        <!-- Last Name -->
+        <div class="form-group" style="margin-bottom:15px;">
+            <label for="last_name" style="font-weight:bold;">Sobrenome</label>
+            <input type="text" name="last_name" id="last_name" placeholder="Digite o sobrenome"
+                   required autocomplete="off"
+                   style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc;">
+        </div>
+
+        <!-- Email -->
+        <div class="form-group" style="margin-bottom:15px;">
+            <label for="email" style="font-weight:bold;">Email</label>
+            <input type="email" name="email" id="email" placeholder="Digite seu email"
+                   required autocomplete="off"
+                   style="width:100%; padding:10px; border-radius:6px; border:1px solid #ccc;">
+        </div>
+
+        <!-- Password -->
+        <div class="form-group" style="margin-bottom:15px; position:relative;">
+            <label for="password1" style="font-weight:bold;">Senha</label>
+            <input type="password" name="password1" id="password1" placeholder="Digite sua senha"
+                   required autocomplete="new-password"
+                   style="width:100%; padding:10px 40px 10px 10px; border-radius:6px; border:1px solid #ccc;">
+            <span onclick="togglePassword('password1')" style="position:absolute; right:10px; top:38px; cursor:pointer; color:#888;">👁️</span>
+        </div>
+
+        <!-- Password Confirm -->
+        <div class="form-group" style="margin-bottom:20px; position:relative;">
+            <label for="password2" style="font-weight:bold;">Confirmar Senha</label>
+            <input type="password" name="password2" id="password2" placeholder="Confirme a senha"
+                   required autocomplete="new-password"
+                   style="width:100%; padding:10px 40px 10px 10px; border-radius:6px; border:1px solid #ccc;">
+            <span onclick="togglePassword('password2')" style="position:absolute; right:10px; top:38px; cursor:pointer; color:#888;">👁️</span>
+        </div>
+
+        <button type="submit" style="width:100%; padding:12px; background:#d4af37; border:none; border-radius:6px; font-weight:bold; cursor:pointer; color:#000; font-size:16px;">Criar Conta</button>
+    </form>
+</div>
+
+<script>
+// Função para mostrar/ocultar senha
+function togglePassword(fieldId) {
+    const field = document.getElementById(fieldId);
+    field.type = (field.type === "password") ? "text" : "password";
+}
+</script>
+{% endblock %}

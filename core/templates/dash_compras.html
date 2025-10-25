@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="background:#fff; padding:30px; border-radius:12px; max-width:1200px; margin:0 auto; box-shadow:0 6px 20px rgba(0,0,0,0.1);">
+    <h2 style="color:#d4af37; text-align:center; margin-bottom:20px;">🛒 Lista de Compras Sugerida</h2>
+
+    <!-- Filtro de dias -->
+    <form method="get" style="margin-bottom:20px; display:flex; gap:10px; align-items:center;">
+        <label style="color:#000;">Quantidade de dias para planejar:</label>
+        <input type="number" name="dias" value="{{ dias }}" min="1" style="padding:5px; border-radius:5px; border:1px solid #d4af37;">
+        <button type="submit" style="background:#d4af37; color:#000; border:none; padding:5px 15px; border-radius:5px; cursor:pointer;">Gerar Lista</button>
+    </form>
+
+    {% if produtos_estimativa %}
+    <table style="width:100%; border-collapse:collapse; text-align:left; background:#fff;">
+        <thead style="background:#000;">
+            <tr>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Produto</th>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Média diária (últimas 3 semanas)</th>
+                <th style="padding:12px; color:#d4af37; text-align:left;">Quantidade sugerida para {{ dias }} dias</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in produtos_estimativa %}
+            <tr style="border-bottom:1px solid #d4af37;">
+                <td style="padding:10px;">{{ item.produto }}</td>
+                <td style="padding:10px;">{{ item.media_diaria }}</td>
+                <td style="padding:10px;">{{ item.quantidade_sugerida }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p style="color:#e74c3c; text-align:center; font-weight:bold;">Nenhum dado de vendas ou saída de estoque nas últimas 3 semanas.</p>
+    {% endif %}
+</div>
+{% endblock %}

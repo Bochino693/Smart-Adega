@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+
+{% block title %}Balanço Financeiro{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">💰 Balanço Financeiro — {{ mes }}/{{ ano }}</h2>
+
+<!-- Filtro de mês e ano -->
+<form method="get" class="row g-3 mb-4 align-items-end">
+    <div class="col-md-3">
+        <label for="mes" class="form-label">Mês</label>
+        <select name="mes" id="mes" class="form-select">
+            {% for i, nome in meses %}
+                <option value="{{ i }}" {% if mes == i %}selected{% endif %}>{{ nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-3">
+        <label for="ano" class="form-label">Ano</label>
+        <input type="number" name="ano" id="ano" value="{{ ano }}" class="form-control" min="2020" max="2100">
+    </div>
+
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-warning">🔍 Filtrar</button>
+    </div>
+</form>
+
+<hr>
+
+    <!-- Botão para nova despesa -->
+    <button type="button" class="btn btn-primary mb-3" data-bs-toggle="collapse" data-bs-target="#formDespesa">
+        ➕ Adicionar Despesa
+    </button>
+
+    <div id="formDespesa" class="collapse mb-4">
+        <form method="post" class="card card-body bg-light">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success">💾 Salvar Despesa</button>
+        </form>
+    </div>
+
+    <!-- Lista de despesas -->
+    <h3 class="mt-4">📋 Despesas</h3>
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Categoria</th>
+                <th>Descrição</th>
+                <th>Valor</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for d in despesas %}
+            <tr>
+                <td>{{ d.categoria.nome }}</td>
+                <td>{{ d.descricao }}</td>
+                <td>R$ {{ d.valor|floatformat:2 }}</td>
+                <td>{{ d.data|date:"d/m/Y" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted">Nenhuma despesa cadastrada neste mês.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <hr>
+
+    <!-- Resumo Financeiro -->
+    <h3 class="mt-4">📈 Resumo Financeiro</h3>
+    <div class="card p-3 bg-dark text-light">
+        <ul class="list-unstyled mb-0">
+            <li><strong>Total Líquido das Vendas:</strong> R$ {{ total_liquido|floatformat:2 }}</li>
+            <li><strong>Ganho Rentável das Vendas:</strong> R$ {{ total_ganho_potencial|floatformat:2 }}</li>
+            <li><strong>Despesas Totais:</strong> R$ {{ total_despesas|floatformat:2 }}</li>
+            <li><strong>Lucro Líquido Real(Lucro Liquido - Despesas):</strong>
+                <span class="{% if lucro_liquido < 0 %}text-danger{% else %}text-success{% endif %}">
+                    R$ {{ lucro_liquido|floatformat:2 }}
+                </span>
+            </li>
+            <li><strong>Lucro Potencial(Ganho real em cada Produto - Despesas):</strong>
+                <span class="{% if lucro_potencial < 0 %}text-danger{% else %}text-success{% endif %}">
+                    R$ {{ lucro_potencial|floatformat:2 }}
+                </span>
+            </li>
+        </ul>
+    </div>
+</div>
+
+
+<hr>
+
+<h3 class="mt-4">📆 Fechamentos Financeiros Mensais</h3>
+<table class="table table-striped table-hover">
+    <thead class="table-dark">
+        <tr>
+            <th>Mês</th>
+            <th>Líquido Total</th>
+            <th>Ganho Potencial</th>
+            <th>Despesas</th>
+            <th>Lucro Líquido</th>
+            <th>Lucro Potencial</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for f in fechamentos %}
+        <tr>
+            <td>{{ f }}</td>
+            <td>R$ {{ f.total_liquido|floatformat:2 }}</td>
+            <td>R$ {{ f.total_ganho_potencial|floatformat:2 }}</td>
+            <td>R$ {{ f.total_despesas|floatformat:2 }}</td>
+            <td class="{% if f.lucro_liquido < 0 %}text-danger{% else %}text-success{% endif %}">
+                R$ {{ f.lucro_liquido|floatformat:2 }}
+            </td>
+            <td class="{% if f.lucro_potencial < 0 %}text-danger{% else %}text-success{% endif %}">
+                R$ {{ f.lucro_potencial|floatformat:2 }}
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="6" class="text-center text-muted">Nenhum fechamento financeiro registrado ainda.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+
+{% endblock %}

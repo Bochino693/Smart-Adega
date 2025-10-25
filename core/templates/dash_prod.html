@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block grafico %}
+<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+<script type="text/javascript">
+  google.charts.load('current', {'packages':['corechart']});
+  google.charts.setOnLoadCallback(drawCharts);
+
+  function drawCharts() {
+      // --- Gráfico de Barras ---
+      var data1 = google.visualization.arrayToDataTable({{ dados_grafico|safe }});
+
+      var chartHeight = Math.max(500, data1.getNumberOfRows() * 50);
+
+      var options1 = {
+          width: 800,
+          height: chartHeight,
+          legend: { position: 'none' },
+          chartArea: {left: 250, right: 50, width: '65%', height: '80%'}, // mais espaço à direita
+          hAxis: { title: 'Quantidade', format: '0' },
+          vAxis: { textStyle: { fontSize: 12 } },
+          bar: { groupWidth: "80%" },
+          annotations: {    // mostra valores nas barras
+              alwaysOutside: true,
+              textStyle: {
+                  fontSize: 12,
+                  bold: true,
+                  color: '#000'
+              }
+          },
+          animation: {      // efeito ao carregar
+              startup: true,
+              duration: 1200,
+              easing: 'out'
+          }
+      };
+
+      var chart1 = new google.visualization.BarChart(document.getElementById('chart_barras'));
+      chart1.draw(data1, options1);
+
+      // --- Gráfico de Rosca ---
+      var data2 = google.visualization.arrayToDataTable({{ dados_categorias|safe }});
+
+      var options2 = {
+          title: 'Participação por Categoria (%)',
+          pieHole: 0.4,
+          width: 600,
+          height: 500,
+          chartArea: {left: 30, top: 50, right: 30, bottom: 30}, // evita corte
+          animation: {       // efeito ao carregar
+              startup: true,
+              duration: 1200,
+              easing: 'out'
+          }
+      };
+
+      var chart2 = new google.visualization.PieChart(document.getElementById('chart_rosca'));
+      chart2.draw(data2, options2);
+  }
+</script>
+{% endblock %}
+
+{% block content %}
+<div style="text-align:center; margin-bottom:20px;">
+  <form method="get" style="display:flex; gap:15px; justify-content:center; flex-wrap:wrap;">
+    <div>
+      <label for="filtroGrafico" style="font-weight:bold; margin-right:10px;">Filtrar por:</label>
+      <select id="filtroGrafico" name="filtro" style="padding:8px; border-radius:5px; border:1px solid #ccc;" onchange="this.form.submit()">
+        <option value="mais_vendidos" {% if filtro_atual == "mais_vendidos" %}selected{% endif %}>Mais vendidos</option>
+        <option value="menos_vendidos" {% if filtro_atual == "menos_vendidos" %}selected{% endif %}>Menos vendidos</option>
+      </select>
+    </div>
+
+    <div>
+      <label for="data_inicio">De:</label>
+      <input type="date" id="data_inicio" name="data_inicio" value="{{ data_inicio }}" style="padding:5px; border-radius:5px;">
+      <label for="data_fim">Até:</label>
+      <input type="date" id="data_fim" name="data_fim" value="{{ data_fim }}" style="padding:5px; border-radius:5px;">
+      <button type="submit" style="padding:6px 12px; border:none; border-radius:5px; background:#007bff; color:white;">Filtrar</button>
+    </div>
+  </form>
+</div>
+
+{% if nenhuma_venda %}
+  <p style="text-align:center; font-weight:bold; color:red;">
+    Nenhuma estatística de vendas encontrada no período selecionado.
+  </p>
+{% else %}
+  <!-- Lado a lado -->
+  <div style="display:flex; justify-content:center; gap:40px; flex-wrap:wrap;">
+      <div id="chart_barras"></div>
+      <div id="chart_rosca"></div>
+  </div>
+{% endif %}
+{% endblock %}
