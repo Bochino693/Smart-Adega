@@ -47,5 +47,7 @@ urlpatterns = [
     path('gerar-backup/', gerar_backup, name='gerar_backup'),
 
 ]
-if settings.DEBUG:
+# Serve arquivos estáticos e media (apenas quando DEBUG=False)
+if settings.DEBUG or True:  # sempre para teste, no Render pode colocar True
+    urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
