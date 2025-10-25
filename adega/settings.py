@@ -27,8 +27,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 
-ALLOWED_HOSTS = ['smart-adega.onrender.com', 'localhost', '127.0.0.1']
-
+ALLOWED_HOSTS = ['smart-adega-amto.onrender.com', 'localhost', '127.0.0.1']
 
 # Application definition
 
