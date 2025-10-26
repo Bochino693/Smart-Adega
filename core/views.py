@@ -927,55 +927,72 @@ from django.db.models import Q
 
 
 # Importe Venda e outros modelos/módulos necessários
+from datetime import datetime, date
+from django.db.models import Sum
+from django.shortcuts import render
+from django.core.paginator import Paginator  # Adicione esta importação
+import json
+
+
+# Assuma que Venda.FORMAS_PAGAMENTO e Venda estão definidos em outro lugar.
 
 def dash_vendas(request):
     # Base QuerySet
     vendas_list = Venda.objects.all().order_by("-data")
 
     # --- Recebe filtros ---
-    periodo = request.GET.get("periodo", "")
+    periodo_submetido = request.GET.get("periodo")
     status_pagamento = request.GET.get("status_pagamento", "todos")
     forma_pagamento_filtro = request.GET.get("forma_pagamento", "")
 
-    data_inicio = data_fim = None
+    data_inicio_obj = data_fim_obj = None
+    data_inicio_context = data_fim_context = ""  # Variáveis para o template (iniciais vazias)
 
-    # --- ✅ LÓGICA DE DATAS ALTERADA ---
+    # --- LÓGICA DE DATAS CORRIGIDA (com foco em 'periodo') ---
 
-    # 1. Tenta extrair as datas do período enviado pelo usuário
-    if periodo:
-        partes = periodo.split(" - ")
+    # 1. Primeira Carga (URL sem ?periodo=...): Define o padrão como hoje, mas não preenche o contexto.
+    if periodo_submetido is None:
+        hoje = datetime.today().date()
+        data_inicio_obj = hoje
+        data_fim_obj = hoje
+        # Não preenche data_inicio_context e data_fim_context, para que os inputs fiquem vazios.
+
+    # 2. Filtragem Ativa (periodo contém datas): Tenta extrair e aplicar o filtro.
+    elif periodo_submetido:
+        partes = periodo_submetido.split(" - ")
         if len(partes) == 2:
             try:
-                data_inicio = datetime.strptime(partes[0].strip(), "%d/%m/%Y").date()
-                data_fim = datetime.strptime(partes[1].strip(), "%d/%m/%Y").date()
+                data_inicio_obj = datetime.strptime(partes[0].strip(), "%d/%m/%Y").date()
+                data_fim_obj = datetime.strptime(partes[1].strip(), "%d/%m/%Y").date()
             except ValueError:
-                # Se o formato for inválido, ignora e usa o padrão abaixo
-                pass
+                pass  # Em caso de erro, data_inicio_obj e data_fim_obj continuam None
 
-    # 2. Se não houver data válida (seja por falta de período ou erro de formato),
-    #    define o padrão como o dia de hoje.
-    if not data_inicio or not data_fim:
-        hoje = datetime.today().date()
-        data_inicio = hoje
-        data_fim = hoje
+        # Se a conversão foi bem-sucedida, preenche o contexto para REPOULAR o formulário
+        if data_inicio_obj and data_fim_obj:
+            data_inicio_context = data_inicio_obj.strftime("%d/%m/%Y")
+            data_fim_context = data_fim_obj.strftime("%d/%m/%Y")
 
-    # 3. Com as datas garantidamente definidas (do usuário ou padrão), aplicamos o filtro.
-    #    Esta lógica agora fica fora do 'if periodo:'.
-    if data_inicio and data_fim:
-        if data_inicio > data_fim:
-            data_inicio, data_fim = data_fim, data_inicio  # Garante a ordem correta
+    # 3. Filtro Limpo (periodo é string vazia ''): data_inicio_obj e data_fim_obj permanecem None/Vazios.
+    #    Neste caso, o filtro de data é ignorado e os inputs do template ficam vazios.
+
+    # 4. Aplica o filtro de data (se objetos de data válidos existirem)
+    if data_inicio_obj and data_fim_obj:
+        if data_inicio_obj > data_fim_obj:
+            data_inicio_obj, data_fim_obj = data_fim_obj, data_inicio_obj  # Garante a ordem correta
 
         vendas_list = vendas_list.filter(
-            data__date__gte=data_inicio,
-            data__date__lte=data_fim
+            data__date__gte=data_inicio_obj,
+            data__date__lte=data_fim_obj
         )
-        dias_intervalo = (data_fim - data_inicio).days + 1
+        dias_intervalo = (data_fim_obj - data_inicio_obj).days + 1
     else:
         dias_intervalo = None
 
     # --- FIM DA LÓGICA DE DATAS ---
 
-    # --- DEFINE A LISTA PARA EXIBIÇÃO (vendas_list) ---
+    # --- DEFINE A LISTA PARA EXIBIÇÃO E SOMA DOS TOTAIS ---
+
+    # Aplica filtros de status/forma (mantido como original, interage com o filtro de data acima)
     if forma_pagamento_filtro:
         vendas_list = vendas_list.filter(forma_pagamento=forma_pagamento_filtro)
     else:
@@ -983,13 +1000,9 @@ def dash_vendas(request):
             vendas_list = vendas_list.exclude(forma_pagamento="pendente")
         elif status_pagamento == "pendentes":
             vendas_list = vendas_list.filter(forma_pagamento="pendente")
-        # else: "todos"
 
-    # ==========================================================
-    # --- DEFINE A LISTA PARA SOMA DOS TOTAIS (vendas_totais) ---
-    vendas_totais = vendas_list
-    vendas_totais = vendas_totais.exclude(forma_pagamento="pendente")
-    # ==========================================================
+    # Filtra para totais apenas vendas pagas
+    vendas_totais = vendas_list.exclude(forma_pagamento="pendente")
 
     # --- Totais filtrados (somente vendas pagas) ---
     total_bruto = vendas_totais.aggregate(Sum("valor_bruto"))["valor_bruto__sum"] or 0
@@ -1003,13 +1016,13 @@ def dash_vendas(request):
     # --- Formas de Pagamento para o <select> ---
     formas_pagamento_choices = Venda.FORMAS_PAGAMENTO
 
-    # --- Serializa itens (código omitido mantido como no original) ---
+    # --- Serializa itens (mantido como original) ---
     vendas_itens_json = {}
     for venda_obj in vendas_list:
         itens = []
-        for item in venda_obj.itens.select_related('produto').all():  # garante que produto está carregado
+        for item in venda_obj.itens.select_related('produto').all():
             itens.append({
-                "produto": item.produto.nome_produto,  # aqui pega o nome corretamente
+                "produto": item.produto.nome_produto,
                 "quantidade": item.quantidade,
                 "valor_unitario": float(item.valor_unitario),
                 "desconto": float(item.desconto),
@@ -1019,9 +1032,9 @@ def dash_vendas(request):
 
     context = {
         "vendas": vendas,
-        # ✅ Agora data_inicio e data_fim sempre terão um valor para formatar
-        "data_inicio": data_inicio.strftime("%d/%m/%Y"),
-        "data_fim": data_fim.strftime("%d/%m/%Y"),
+        # ✅ data_inicio e data_fim virão vazias na primeira carga ou se o filtro for limpo.
+        "data_inicio": data_inicio_context,
+        "data_fim": data_fim_context,
         "dias_intervalo": dias_intervalo,
         "status_pagamento": status_pagamento,
         "forma_pagamento_filtro": forma_pagamento_filtro,

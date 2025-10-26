@@ -4,7 +4,6 @@
 
 <h2 style="text-align:center; margin-bottom:20px; color:#d4af37;">Relatório de Vendas</h2>
 
-<!-- 🔹 Container centralizado do filtro -->
 <form id="filtroForm" method="GET"
       style="display:flex; flex-wrap:wrap; justify-content:center; align-items:center;
              gap:10px; background:#111; padding:14px; border-radius:8px;
@@ -21,7 +20,6 @@
                 background:#000; color:#fff; width:130px; text-align:center; cursor:pointer;" readonly>
 
   <input type="hidden" id="periodo" name="periodo">
-
 
   <select name="forma_pagamento"
           style="padding:8px; border-radius:6px; border:1px solid #d4af37;
@@ -49,13 +47,12 @@
   </button>
 </form>
 
-<!-- Dependências do daterangepicker -->
 <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
 <script src="https://cdn.jsdelivr.net/npm/jquery/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/moment/min/moment.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
 
-<!-- Tabela -->
+
 <div style="overflow-x:auto; margin: 0 auto; max-width: 1200px; position: relative;">
   <table style="width:100%; border-collapse: collapse; font-family: Arial, sans-serif;
                 box-shadow: 0 8px 30px rgba(0,0,0,0.35); border-radius:8px; overflow:hidden;">
@@ -104,8 +101,7 @@
   </table>
 </div>
 
-     <!-- Linha Totais fixa -->
-<div style="
+     <div style="
   position: fixed;
   bottom: 0;
   left: 0;
@@ -124,16 +120,15 @@
 </div>
 
 
-<!-- 🔹 Dependências corretas (sem duplicação, ordem garantida) -->
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1/daterangepicker.min.js"></script>
 <link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/daterangepicker@3.1/daterangepicker.css"
 />
-<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/min/moment.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/daterangepicker@3.1/daterangepicker.min.js"></script>
 
-<!-- 🔹 Modal -->
+
 <div id="modalVenda"
      style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
             background:rgba(0,0,0,0.8); justify-content:center; align-items:center; z-index:9999;">
@@ -144,8 +139,7 @@
     <h3 style="color:#d4af37; text-align:center; margin-bottom:10px;">Detalhes da Venda</h3>
     <div id="infoVenda" style="margin-bottom:20px;"></div>
 
-     <!-- Botão para quitar pendência -->
-    <div id="btnQuitarContainer" style="margin-bottom:10px; text-align:center;"></div>
+     <div id="btnQuitarContainer" style="margin-bottom:10px; text-align:center;"></div>
 
     <table style="width:100%; border-collapse:collapse;">
       <thead>
@@ -161,7 +155,6 @@
     </table>
   </div>
 </div>
-
 
 
 <div id="modalPagamento"
@@ -185,10 +178,8 @@
 </div>
 
 
-
 <script>
-
-  $(function() {
+$(function() {
   const hoje = moment();
 
   const localeBR = {
@@ -204,31 +195,47 @@
   };
 
   function initCampo(selector) {
+    // Não precisamos mais do $(selector).attr('name', nameAttr); pois o 'name' foi removido do HTML
+    const initialDate = $(selector).val();
+
     $(selector).daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
-      autoApply: true,               // ✅ aplica imediatamente ao clicar
-      autoUpdateInput: true,         // ✅ atualiza automaticamente o input
+      autoApply: true,
+      autoUpdateInput: true,
       locale: localeBR,
       opens: 'center',
-      startDate: hoje,               // ✅ mostra o calendário já no mês atual
-      maxDate: hoje.clone().endOf('day'),  // impede selecionar futuro
+      // Usa a data do input se houver (vindo do backend); senão, usa hoje como foco.
+      startDate: initialDate ? moment(initialDate, 'DD/MM/YYYY') : hoje,
+      maxDate: hoje.clone().endOf('day'),
     });
 
-    // ✅ Atualiza campo sempre que uma nova data for escolhida
+    // 1. Lógica para aplicar a data
     $(selector).on('apply.daterangepicker', function(ev, picker) {
       $(this).val(picker.startDate.format('DD/MM/YYYY'));
+    });
+
+    // 2. Lógica para limpar (quando o botão 'Limpar' é clicado)
+    $(selector).on('cancel.daterangepicker', function(ev, picker) {
+      $(this).val(''); // Limpa o valor do input, que será tratado no submit
     });
   }
 
   initCampo('#data_inicio');
   initCampo('#data_fim');
 
-  // ✅ Antes de enviar o form, combina o período corretamente
+  // ✅ CORREÇÃO CHAVE: Intercepta a submissão para criar a variável 'periodo'
   $('#filtroForm').on('submit', function() {
     const inicio = $('#data_inicio').val();
     const fim = $('#data_fim').val();
-    $('#periodo').val(inicio && fim ? `${inicio} - ${fim}` : '');
+
+    if (inicio || fim) {
+        // Formato esperado pela view: "DD/MM/YYYY - DD/MM/YYYY"
+        $('#periodo').val(`${inicio || ''} - ${fim || ''}`);
+    } else {
+        // Se ambos estão vazios, o campo 'periodo' será submetido como ""
+        $('#periodo').val('');
+    }
   });
 });
 
@@ -304,7 +311,7 @@ if (itens.length > 0) {
   closeModal.addEventListener("click", () => modal.style.display = "none");
   closeModalPagamento.addEventListener("click", () => modalPagamento.style.display = "none");
 
-  // Confirmar nova forma de pagamento
+  // Confirmar nova forma de pagamento (Lógica de Quitar Venda)
   confirmarPagamento.addEventListener("click", () => {
     const formaEscolhida = novaFormaPagamento.value;
     if (!vendaAtualId) return;
@@ -320,7 +327,7 @@ if (itens.length > 0) {
       .then(data => {
         if (data.success) {
           alert("Venda quitada com sucesso!");
-          location.reload(); // atualiza a página para refletir mudanças
+          location.reload();
         } else {
           alert("Erro ao quitar a venda!");
         }
@@ -351,7 +358,7 @@ if (itens.length > 0) {
 
 
 <style>
-
+/* O seu CSS foi mantido inalterado */
   .venda-row:hover {
     background-color: #222 !important;
     transform: scale(1.01);
@@ -431,4 +438,3 @@ if (itens.length > 0) {
 </style>
 
 {% endblock %}
-
