@@ -186,8 +186,11 @@
 
 
 
-<script>$(function() {
+<script>
+
+  $(function() {
   const hoje = moment();
+
   const localeBR = {
     format: 'DD/MM/YYYY',
     applyLabel: 'Selecionar',
@@ -201,31 +204,27 @@
   };
 
   function initCampo(selector) {
-    $(selector).removeAttr('readonly'); // 🔥 importante: permite click + atualização
     $(selector).daterangepicker({
       singleDatePicker: true,
       showDropdowns: true,
-      autoUpdateInput: false, // 🔥 controlamos manualmente
+      autoApply: true,               // ✅ aplica imediatamente ao clicar
+      autoUpdateInput: true,         // ✅ atualiza automaticamente o input
       locale: localeBR,
       opens: 'center',
-      maxDate: hoje
+      startDate: hoje,               // ✅ mostra o calendário já no mês atual
+      maxDate: hoje.clone().endOf('day'),  // impede selecionar futuro
     });
 
-    // Ao escolher a data
+    // ✅ Atualiza campo sempre que uma nova data for escolhida
     $(selector).on('apply.daterangepicker', function(ev, picker) {
-      $(this).val(picker.startDate.format('DD/MM/YYYY')); // 🔥 escreve a data
-    });
-
-    // Ao cancelar, limpa
-    $(selector).on('cancel.daterangepicker', function() {
-      $(this).val('');
+      $(this).val(picker.startDate.format('DD/MM/YYYY'));
     });
   }
 
   initCampo('#data_inicio');
   initCampo('#data_fim');
 
-  // Envio do formulário
+  // ✅ Antes de enviar o form, combina o período corretamente
   $('#filtroForm').on('submit', function() {
     const inicio = $('#data_inicio').val();
     const fim = $('#data_fim').val();
