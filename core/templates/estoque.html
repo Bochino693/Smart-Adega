@@ -4,14 +4,13 @@
 {% block content %}
 
 <style>
-/* Contêiner da paginação */
+/* ===== PAGINAÇÃO ===== */
 .pagination-container {
     display: flex;
     justify-content: center;
     margin: 20px 0;
 }
 
-/* Lista de itens da paginação */
 .pagination {
     display: flex;
     list-style: none;
@@ -19,12 +18,10 @@
     margin: 0;
 }
 
-/* Itens da paginação */
 .pagination li {
     margin: 0 5px;
 }
 
-/* Links de página */
 .pagination a,
 .pagination span {
     display: inline-block;
@@ -34,26 +31,23 @@
     text-decoration: none;
     border-radius: 5px;
     border: 1px solid #000;
-    color: #000; /* Preto */
-    background-color: #fff; /* Branco */
+    color: #000;
+    background-color: #fff;
     transition: all 0.3s;
 }
 
-/* Hover nos links */
 .pagination a:hover {
-    background-color: #d4af37; /* Dourado */
+    background-color: #d4af37;
     color: #fff;
     border-color: #d4af37;
 }
 
-/* Página ativa */
 .pagination .active span {
-    background-color: #d4af37; /* Dourado */
+    background-color: #d4af37;
     color: #fff;
     border-color: #d4af37;
 }
 
-/* Botões desabilitados (anterior/próximo inativos) */
 .pagination .disabled span {
     color: #aaa;
     border-color: #ccc;
@@ -61,9 +55,9 @@
     cursor: not-allowed;
 }
 
+/* ===== TÍTULO ===== */
 .titulo-estoque {
-    margin-top: 15px;
-    margin-bottom: 25px;
+    margin: 15px 0 25px 0;
     text-align: center;
     font-size: 2rem;
     font-weight: bold;
@@ -72,7 +66,7 @@
     color: #d4af37;
 }
 
-/* GRID DE PRODUTOS */
+/* ===== GRID DE PRODUTOS ===== */
 .produtos-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -80,9 +74,7 @@
     margin-bottom: 2.5rem;
 }
 
-/* CARD */
 .card-produto {
-    width: 100%;
     display: flex;
     align-items: flex-start;
     gap: 16px;
@@ -98,67 +90,49 @@
     box-sizing: border-box;
     overflow: hidden;
 }
+
 .card-produto:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.6);
 }
 
-/* ====== BORDAS CONFORME VALIDADE ====== */
+/* ===== BORDAS POR VALIDADE ===== */
 .borda-cinza { border: 2px solid #888 !important; }
 .borda-preta { border: 2px solid #000 !important; }
 .borda-vermelha { border: 2px solid #e84118 !important; }
 .borda-verde { border: 2px solid #2ecc71 !important; }
 
-/* IMAGEM */
+/* ===== IMAGEM DO CARD ===== */
 .card-produto img {
-    width:120px;
-    height:120px;
-    object-fit:cover;
-    border-radius:12px;
-    flex-shrink:0;
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    flex-shrink: 0;
 }
 
-/* TEXTO */
+/* ===== INFORMAÇÕES DO PRODUTO ===== */
 .card-produto .produto-info {
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    overflow:hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
 }
+
 .card-produto .produto-info h5 {
-    font-size:1.25rem;
-    font-weight:bold;
-    margin:0 0 10px;
-    color:#ffd700;
-    white-space:normal;
-    word-wrap:break-word;
+    font-size: 1.25rem;
+    font-weight: bold;
+    margin: 0 0 10px;
+    color: #ffd700;
+    word-wrap: break-word;
 }
 
-/* BLOCO DE INFORMAÇÃO */
-.info-item {
-    display:flex;
-    flex-direction:column;
-    margin-bottom:6px;
-}
-.info-item .label {
-    font-size:0.75rem;
-    color:#aaa;
-    text-transform:uppercase;
-    letter-spacing:0.5px;
-    margin-bottom:2px;
-}
-.info-item .value {
-    font-size:1rem;
-    color:#f5f5f5;
-    font-weight:500;
-}
-
-/* CAMPOS DE FORMULÁRIO */
 .info-item {
     display: flex;
     flex-direction: column;
     margin-bottom: 15px;
 }
+
 .info-item .label {
     font-size: 0.85rem;
     color: #bbb;
@@ -166,6 +140,13 @@
     margin-bottom: 4px;
     letter-spacing: 0.5px;
 }
+
+.info-item .value {
+    font-size: 1rem;
+    color: #f5f5f5;
+    font-weight: 500;
+}
+
 .info-item select,
 .info-item input {
     padding: 10px 12px;
@@ -177,67 +158,69 @@
     outline: none;
     transition: all 0.3s ease;
 }
+
 .info-item select:focus,
 .info-item input:focus {
     border-color: #fbc531;
     box-shadow: 0 0 8px rgba(251,197,49,0.5);
 }
 
-/* MODAL - formato retangular compacto */
+/* ===== MODAL ===== */
 .modal-custom {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 90%;
-  max-width: 500px;   /* largura fixa */
-  max-height: 90vh;   /* não deixa estourar tela */
-  background: #1c1c1c;
-  padding: 25px;
-  border-radius: 14px;
-  text-align: center;
-  color: #fff;
-  display: none;
-  overflow-y: auto;   /* rolagem se passar do limite */
-  z-index: 1000;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 500px;
+    max-height: 90vh;
+    background: #1c1c1c;
+    padding: 25px;
+    border-radius: 14px;
+    text-align: center;
+    color: #fff;
+    display: none;
+    overflow-y: auto;
+    z-index: 1000;
 }
 
-
 .modal-custom.show {
-  display: flex;
-  opacity: 1;
+    display: flex;
+    opacity: 1;
 }
 
 .modal-content {
-  background: #1c1c1c;
-  color: #fff;
-  padding: 30px 25px;
-  border-radius: 20px;
-  max-width: 450px;
-  width: 100%;
-  text-align: center;
-  position: relative;
+    background: #1c1c1c;
+    color: #fff;
+    padding: 30px 25px;
+    border-radius: 20px;
+    max-width: 450px;
+    width: 100%;
+    text-align: center;
+    position: relative;
 }
 
-/* Removido: animação de entrada */
-@keyframes modalFadeIn {
-  from { transform: none; opacity: 1; }
-  to { transform: none; opacity: 1; }
-}
-
-/* FECHAR MODAL */
+/* ===== BOTÃO DE FECHAR (X) ===== */
 .close {
     position: absolute;
-    top: 12px;
-    right: 20px;
+    top: 10px;
+    right: 15px;
     font-size: 28px;
+    font-weight: bold;
+    color: #fff;
     cursor: pointer;
-    color: #f1c40f;
-    transition: transform 0.2s ease;
+    z-index: 2000;
+    transition: transform 0.2s ease, color 0.3s ease;
+    background: none;
+    border: none;
 }
 
+.close:hover {
+    color: #ffd700;
+    transform: scale(1.1);
+}
 
-/* TÍTULO */
+/* ===== TÍTULO DO MODAL ===== */
 .modal-nome {
     font-size: 1.8rem;
     font-weight: bold;
@@ -247,191 +230,129 @@
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-
-/* BOTÕES */
+/* ===== BOTÕES MODERNOS ===== */
 .modal-buttons {
     margin-top: 20px;
     display: flex;
     justify-content: center;
     gap: 12px;
 }
+
 .btn-modern {
-    padding: 12px 22px;
+    padding: 10px 18px;
     border: none;
-    border-radius: 16px;
+    border-radius: 10px;
     font-size: 0.95rem;
     font-weight: bold;
     cursor: pointer;
     transition: all 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-.btn-edit {
-    background: linear-gradient(135deg, #fbc531, #e1b12c);
-    color: #111;
-}
-.btn-edit:hover {
-    background: linear-gradient(135deg, #ffd700, #f5c400);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(255,215,0,0.6);
-}
-.btn-close {
-    background: linear-gradient(135deg, #636e72, #718093);
-    color: #fff;
-}
-.btn-close:hover {
-    background: linear-gradient(135deg, #7f8c8d, #95a5a6);
-    transform: translateY(-3px);
-    box-shadow: 0 6px 16px rgba(189,195,199,0.6);
-}
-.modal-img {
-    width:100px;
-    height:100px;
-    object-fit:cover;
-    margin-bottom:15px;
-    border-radius:10px;
-}
-.close {
-    position:absolute;
-    top:10px;
-    right:15px;
-    font-size:24px;
-    cursor:pointer;
-    color:#d4af37;
-}
-.modal-buttons { margin-top:15px; display:flex; justify-content:center; gap:10px; }
-
-/* ===== MODAL TEXTO ===== */
-.modal-nome {
-    font-size:1.6rem;
-    font-weight:bold;
-    margin-bottom:15px;
-    color:#ffd700;
-    text-shadow:0 0 10px rgba(255,215,0,0.5);
-}
-
-.modal-info p {
-    font-size:1rem;
-    margin:6px 0;
-    color:#ddd;
-    transition:color 0.3s ease;
-}
-.modal-info p:hover { color:#ffd700; }
-
-/* ===== MODAL BOTÕES MODERNOS ===== */
-.btn-modern {
-    padding:10px 18px;
-    border:none;
-    border-radius:10px;
-    font-size:0.95rem;
-    font-weight:bold;
-    cursor:pointer;
-    transition: all 0.3s ease;
     box-shadow: 0 3px 8px rgba(0,0,0,0.4);
 }
-.btn-edit { background:linear-gradient(135deg,#fbc531,#e1b12c); color:#111; }
-.btn-edit:hover { background:linear-gradient(135deg,#ffd700,#f5c400); transform:translateY(-2px); box-shadow:0 4px 12px rgba(255,215,0,0.6); }
-.btn-delete { background:linear-gradient(135deg,#e84118,#c23616); color:#fff; }
-.btn-delete:hover { background:linear-gradient(135deg,#ff5e3a,#d63031); transform:translateY(-2px); box-shadow:0 4px 12px rgba(231,76,60,0.6); }
-.btn-close { background:linear-gradient(135deg,#718093,#636e72); color:#fff; }
-.btn-close:hover { background:linear-gradient(135deg,#95a5a6,#7f8c8d); transform:translateY(-2px); box-shadow:0 4px 12px rgba(189,195,199,0.6); }
 
+/* Botões específicos */
+.btn-edit {
+    background: #ffd700;
+    color: #111;
+}
 
-/* Estilo para inputs dentro dos cards */
-  .input-estilo {
-    padding:6px 8px;
-    border:1px solid #ccc;
-    border-radius:5px;
-    font-size:13px;
+.btn-edit:hover {
+    background: #f5c400;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255,215,0,0.6);
+}
+
+.btn-delete {
+    background: #e84118;
+    color: #fff;
+}
+
+.btn-delete:hover {
+    background: #ff5e3a;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(231,76,60,0.6);
+}
+
+.btn-close {
+    background: #ccc;
+    color: #111;
+}
+
+.btn-close:hover {
+    background: #aaa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(189,195,199,0.6);
+}
+
+/* ===== MODAL IMAGEM ===== */
+.modal-img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    margin-bottom: 15px;
+    border-radius: 10px;
+}
+
+/* ===== ESTILO DE INPUTS DENTRO DE CARDS ===== */
+.input-estilo {
+    padding: 6px 8px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 13px;
     transition: all 0.2s ease;
-  }
-  .input-estilo:focus {
-    border-color:#d4af37;
-    outline:none;
-    box-shadow:0 0 4px rgba(212,175,55,0.5);
-  }
-  /* Para alinhamento dos controles dentro do card */
-  .produto-card {
-    display:flex;
-    align-items:center;
-    gap:15px;
-    border:1px solid #ccc;
-    padding:12px;
-    border-radius:8px;
-    margin-bottom:10px;
-    background:#fafafa;
-  }
-  .produto-info {
-    flex:1;
-    display:flex;
-    flex-direction:column;
-    gap:6px;
-  }
-  .linha-inputs {
-    display:flex;
-    align-items:center;
-    gap:10px;
-  }
-  .btn-adicionar {
-    padding:6px 12px;
-    background:#28a745;
-    color:#fff;
-    border:none;
-    border-radius:5px;
-    cursor:pointer;
-    transition:background 0.2s ease;
-  }
-  .btn-adicionar:hover {
-    background:#218838;
-  }
+}
 
-    #produtoResultado {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
-  overflow-x: hidden; /* impede barra lateral horizontal */
+.input-estilo:focus {
+    border-color: #d4af37;
+    outline: none;
+    box-shadow: 0 0 4px rgba(212,175,55,0.5);
+}
+
+/* ===== PRODUTOS NO RESULTADO ===== */
+#produtoResultado {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
 }
 
 #produtoResultado .produto-card {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  border: 1px solid #ccc;
-  padding: 12px;
-  border-radius: 8px;
-  margin-bottom: 10px;
-  background: #fafafa;
-  width: 100%;              /* ocupa toda largura */
-  box-sizing: border-box;   /* respeita padding */
-  overflow: hidden;         /* evita estourar o modal */
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    border: 1px solid #ccc;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background: #fafafa;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-
-/* garante que a tabela não crie quadrado branco */
+/* ===== TABELAS ===== */
 #carrinhoTabela,
 #carrinhoTabela thead,
 #carrinhoTabela tbody,
 #carrinhoTabela tr,
 #carrinhoTabela th,
 #carrinhoTabela td {
-  background: transparent !important;
+    background: transparent !important;
 }
 
-/* produto em linha (horizontal) */
+/* ===== PRODUTO HORIZONTAL ===== */
 .carrinho-produto {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  justify-content: flex-start;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-start;
 }
 
 .carrinho-produto img {
-  width: 40px;
-  height: 40px;
-  object-fit: cover;
-  border-radius: 4px;
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
 }
-
-
 
 </style>
 
@@ -563,19 +484,16 @@
 
 <!-- MODAL DE DETALHES DO PRODUTO -->
 <div id="modalEstoque" class="modal-custom">
-    <div class="modal-content">
-        <span class="close" onclick="document.getElementById('modalEstoque').style.display='none'">&times;</span>
-        <img id="estoqueImg" src="" class="modal-img" alt="">
-        <h3 id="estoqueNome" class="modal-nome"></h3>
-        <div class="modal-info">
-            <p id="estoqueQtd"></p>
-            <p id="estoqueLote"></p>
-            <p id="estoqueValidade"></p>
-        </div>
-        <div class="modal-buttons">
-            <button class="btn-modern btn-close" onclick="document.getElementById('modalEstoque').style.display='none'">Fechar</button>
-        </div>
+  <div class="modal-content">
+    <span class="close" onclick="document.getElementById('modalEstoque').style.display='none'">&times;</span>
+    <img id="estoqueImg" src="" class="modal-img" alt="">
+    <h3 id="estoqueNome" class="modal-nome"></h3>
+    <div class="modal-info">
+      <p id="estoqueQtd"></p>
+      <p id="estoqueLote"></p>
+      <p id="estoqueValidade"></p>
     </div>
+  </div>
 </div>
 
 <!-- MODAL DE ADIÇÃO DE ESTOQUE -->
