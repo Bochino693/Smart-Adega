@@ -179,72 +179,63 @@
 
 <script>
 $(function() {
-  const hoje = moment();
-
-  const localeBR = {
+  // Locale customizado do seu template de relatórios gráficos
+  var customLocale = {
     format: 'DD/MM/YYYY',
-    applyLabel: 'Selecionar',
-    cancelLabel: 'Limpar',
-    daysOfWeek: ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'],
+    applyLabel: "Selecionar",
+    cancelLabel: "Limpar",
+    daysOfWeek: ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"],
     monthNames: [
-      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
-      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+      "Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+      "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"
     ],
     firstDay: 1
   };
 
-  function initCampo(selector) {
-    const initialDateString = $(selector).val();
-    let initialDateMoment = hoje; // Padrão: hoje
+  // ✅ Inicializa o daterangepicker para data_inicio
+  $('#data_inicio').daterangepicker({
+    singleDatePicker: true,
+    autoUpdateInput: false, // CHAVE: Não preenche o input automaticamente
+    locale: customLocale,
+    // Define a data inicial (se houver) para o daterangepicker
+    startDate: $('#data_inicio').val() ? moment($('#data_inicio').val(), 'DD/MM/YYYY') : moment(),
+    maxDate: moment().endOf('day'),
+  });
 
-    // ✅ CORREÇÃO APLICADA: Tenta analisar a string de data, se existir
-    if (initialDateString) {
-        const parsedDate = moment(initialDateString, 'DD/MM/YYYY');
-        if (parsedDate.isValid()) {
-            initialDateMoment = parsedDate;
-        }
-    }
+  // ✅ Inicializa o daterangepicker para data_fim
+  $('#data_fim').daterangepicker({
+    singleDatePicker: true,
+    autoUpdateInput: false, // CHAVE: Não preenche o input automaticamente
+    locale: customLocale,
+    // Define a data inicial (se houver) para o daterangepicker
+    startDate: $('#data_fim').val() ? moment($('#data_fim').val(), 'DD/MM/YYYY') : moment(),
+    maxDate: moment().endOf('day'),
+  });
 
-    $(selector).daterangepicker({
-      singleDatePicker: true,
-      showDropdowns: true,
-      autoApply: true,
-      autoUpdateInput: true,
-      locale: localeBR,
-      opens: 'center',
-      // Usa a data processada acima
-      startDate: initialDateMoment,
-      maxDate: hoje.clone().endOf('day'),
-    });
+  // ✅ Evento Apply: Define o valor manualmente após a escolha da data
+  $('#data_inicio, #data_fim').on('apply.daterangepicker', function(ev, picker) {
+    $(this).val(picker.startDate.format('DD/MM/YYYY'));
+  });
 
-    // 1. Lógica para aplicar a data
-    $(selector).on('apply.daterangepicker', function(ev, picker) {
-      $(this).val(picker.startDate.format('DD/MM/YYYY'));
-    });
+  // ✅ Evento Cancel: Limpa o input
+  $('#data_inicio, #data_fim').on('cancel.daterangepicker', function(ev, picker) {
+    $(this).val('');
+  });
 
-    // 2. Lógica para limpar (quando o botão 'Limpar' é clicado)
-    $(selector).on('cancel.daterangepicker', function(ev, picker) {
-      $(this).val('');
-    });
-  }
-
-  initCampo('#data_inicio');
-  initCampo('#data_fim');
-
-  // Lógica de Submissão (mantida, pois está correta para o filtro 'periodo')
-  $('#filtroForm').on('submit', function() {
+  // ✅ Lógica de Submissão do Formulário (corrigida na resposta anterior, mantida)
+  $('#filtroForm').on('submit', function(e) {
     const inicio = $('#data_inicio').val();
     const fim = $('#data_fim').val();
 
-    if (inicio || fim) {
-        // Formato esperado pela view: "DD/MM/YYYY - DD/MM/YYYY"
-        $('#periodo').val(`${inicio || ''} - ${fim || ''}`);
-    } else {
-        // Se ambos estão vazios, o campo 'periodo' será submetido como ""
-        $('#periodo').val('');
-    }
+    // Constrói o campo 'periodo' no formato esperado pela view: "DD/MM/YYYY - DD/MM/YYYY"
+    $('#periodo').val(`${inicio || ''} - ${fim || ''}`);
   });
 });
+
+
+// -----------------------------------------------------
+// Lógica de Modais (Mantida)
+// -----------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
   const modal = document.getElementById("modalVenda");
