@@ -322,12 +322,6 @@
     </button>
 </form>
 
-{% if despesas_vazias and not request.user.is_authenticated %}
-<div style="display:flex; justify-content:flex-end; margin-bottom: 20px; gap:10px; position: relative; z-index: 10;">
-    <button class="btn-modern btn-edit" id="btnCriarUsuarioPadrao">👤 Criar Usuário Admin Inicial</button>
-</div>
-{% endif %}
-
 {% if request.user.is_staff %}
 <div style="display:flex; justify-content:flex-end; margin-bottom: 20px; gap:10px; position: relative; z-index: 10;">
     <button class="btn-modern btn-edit" onclick="gerarBackup()">💾 Gerar Backup Inicial</button>
