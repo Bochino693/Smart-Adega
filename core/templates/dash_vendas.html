@@ -187,14 +187,10 @@
 
 <script>
 $(function() {
-  // 1. ✅ CORREÇÃO: Defina o limite máximo como o FIM do dia atual.
-  // Isso garante que o dia de hoje (até 23:59:59) seja selecionável sem ambiguidades.
+  // Limite máximo: final do dia atual
   const maxLimit = moment().endOf('day');
-
-  // Use moment() para o startDate, para que o calendário abra no mês atual
   const today = moment();
 
-  // Configuração de idioma/locale (sem alterações)
   const localeConfig = {
     format: 'DD/MM/YYYY',
     applyLabel: 'Selecionar',
@@ -207,36 +203,44 @@ $(function() {
     firstDay: 1
   };
 
-  // 2. ✨ MELHORIA: Aplica o daterangepicker para ambos os campos de uma vez
-  $('#data_inicio, #data_fim').daterangepicker({
-    singleDatePicker: true,
-    showDropdowns: true,
-    autoUpdateInput: false, // Ótima prática para controle manual
-    locale: localeConfig,
-    opens: 'center',
-    maxDate: maxLimit,      // Usando a nova data máxima corrigida
-    startDate: today
-  })
-  // Função para atualizar o valor do input quando uma data é escolhida
-  .on('apply.daterangepicker', function(ev, picker) {
-    $(this).val(picker.chosenDate.format('DD/MM/YYYY'));
-  })
-  // Função para limpar o valor do input quando se clica em "Limpar"
-  .on('cancel.daterangepicker', function(ev, picker) {
+  // ✅ Inicializa individualmente cada campo
+  $('#data_inicio').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      autoUpdateInput: true,
+      locale: localeConfig,
+      opens: 'center',
+      maxDate: maxLimit,
+      startDate: today
+  }).on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('DD/MM/YYYY'));
+  }).on('cancel.daterangepicker', function() {
       $(this).val('');
   });
 
+  $('#data_fim').daterangepicker({
+      singleDatePicker: true,
+      showDropdowns: true,
+      autoUpdateInput: true,
+      locale: localeConfig,
+      opens: 'center',
+      maxDate: maxLimit,
+      startDate: today
+  }).on('apply.daterangepicker', function(ev, picker) {
+      $(this).val(picker.startDate.format('DD/MM/YYYY'));
+  }).on('cancel.daterangepicker', function() {
+      $(this).val('');
+  });
 
-  // 🔸 Monta o campo "periodo" antes de enviar (sem alterações)
+  // ✅ Monta o campo "periodo" antes de enviar
   $('#filtroForm').on('submit', function() {
-    const inicio = $('#data_inicio').val();
-    const fim = $('#data_fim').val();
-
-    if (inicio && fim) {
-      $('#periodo').val(`${inicio} - ${fim}`);
-    } else {
-      $('#periodo').val('');
-    }
+      const inicio = $('#data_inicio').val();
+      const fim = $('#data_fim').val();
+      if (inicio && fim) {
+          $('#periodo').val(`${inicio} - ${fim}`);
+      } else {
+          $('#periodo').val('');
+      }
   });
 });
 
