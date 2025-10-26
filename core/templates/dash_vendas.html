@@ -1,7 +1,6 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
 <h2 style="text-align:center; margin-bottom:20px; color:#d4af37;">Relatório de Vendas</h2>
 
 <form id="filtroForm" method="GET"
@@ -195,8 +194,16 @@ $(function() {
   };
 
   function initCampo(selector) {
-    // Não precisamos mais do $(selector).attr('name', nameAttr); pois o 'name' foi removido do HTML
-    const initialDate = $(selector).val();
+    const initialDateString = $(selector).val();
+    let initialDateMoment = hoje; // Padrão: hoje
+
+    // ✅ CORREÇÃO APLICADA: Tenta analisar a string de data, se existir
+    if (initialDateString) {
+        const parsedDate = moment(initialDateString, 'DD/MM/YYYY');
+        if (parsedDate.isValid()) {
+            initialDateMoment = parsedDate;
+        }
+    }
 
     $(selector).daterangepicker({
       singleDatePicker: true,
@@ -205,8 +212,8 @@ $(function() {
       autoUpdateInput: true,
       locale: localeBR,
       opens: 'center',
-      // Usa a data do input se houver (vindo do backend); senão, usa hoje como foco.
-      startDate: initialDate ? moment(initialDate, 'DD/MM/YYYY') : hoje,
+      // Usa a data processada acima
+      startDate: initialDateMoment,
       maxDate: hoje.clone().endOf('day'),
     });
 
@@ -217,14 +224,14 @@ $(function() {
 
     // 2. Lógica para limpar (quando o botão 'Limpar' é clicado)
     $(selector).on('cancel.daterangepicker', function(ev, picker) {
-      $(this).val(''); // Limpa o valor do input, que será tratado no submit
+      $(this).val('');
     });
   }
 
   initCampo('#data_inicio');
   initCampo('#data_fim');
 
-  // ✅ CORREÇÃO CHAVE: Intercepta a submissão para criar a variável 'periodo'
+  // Lógica de Submissão (mantida, pois está correta para o filtro 'periodo')
   $('#filtroForm').on('submit', function() {
     const inicio = $('#data_inicio').val();
     const fim = $('#data_fim').val();
