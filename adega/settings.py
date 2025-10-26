@@ -76,9 +76,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ---------- STATIC FILES ----------
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # WhiteNoise serve daqui
-STATICFILES_DIRS = [BASE_DIR / 'static']  # suas pastas locais de static
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static_files')
+
 
 # ---------- MEDIA FILES ----------
 MEDIA_URL = '/media/'
