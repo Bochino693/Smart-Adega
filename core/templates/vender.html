@@ -761,7 +761,7 @@ produtos.forEach(card => {
         produtoAtual = {
             id: card.dataset.id,
             nome: card.dataset.nome,
-            preco: parseFloat(card.dataset.preco),
+            preco: parseFloat((card.dataset.preco || "0").replace(",", ".")),
             categoria: card.dataset.categoria.toLowerCase(),
             geloPorUnidade: parseInt(card.dataset.qtdgelo) || 0
         };
