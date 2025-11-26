@@ -59,33 +59,45 @@
         }
 
         nav a {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: #fff;
-            font-weight: bold;
-            background: #111;
-            padding: 10px;
-            border-radius: 10px;
-            width: 100px;
-            font-size: 0.85rem;
-            box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
-            transition: 0.3s;
-        }
+    display: flex;
+    flex-direction: row;      /* ícone e texto lado a lado */
+    align-items: center;      /* centraliza verticalmente */
+    gap: 8px;                 /* espaço entre ícone e texto */
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    background: #111;
+    padding: 10px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    box-shadow: 0px 3px 6px rgba(0,0,0,0.2);
+    transition: 0.3s;
+    width: auto;              /* ajusta à largura do conteúdo */
+}
 
+nav a img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+    margin-bottom: 0;         /* remove margem inferior */
+}
         nav a:hover {
             background: #222;
             transform: translateY(-2px);
             color: #d4af37;
         }
 
-        nav img {
-            width: 35px;
-            height: 35px;
-            margin-bottom: 5px;
-            object-fit: contain;
+
+
+        nav.nav-icons a.active-nav {
+            background: #d4af37;
+            color: #000;
+            transform: translateY(-2px);
         }
+
+nav.nav-icons a.active-nav img {
+    filter: brightness(1.2);
+}
 
         hr {
             border: none;
@@ -206,15 +218,6 @@ main {
         }
 
 
-        nav.nav-icons a.active-nav {
-    background: #d4af37;
-    color: #000;
-    transform: translateY(-2px);
-}
-
-nav.nav-icons a.active-nav img {
-    filter: brightness(1.2);
-}
 
 #userDropdown {
     display: none;
@@ -263,7 +266,7 @@ nav.nav-icons a.active-nav img {
           </div>
         </div>
       {% else %}
-        <a href="{% url 'login' %}" style="text-decoration:none; color:#fff; display:flex; flex-direction:column; align-items:center;">
+        <a href="{% url 'login' %}#login-card" style="text-decoration:none; color:#fff; display:flex; flex-direction:column; align-items:center;">
           <img src="{% static 'images/user-icon.png' %}" alt="Usuário" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
           <div style="font-size:0.85rem; margin-top:3px;">Fazer login</div>
         </a>
@@ -293,15 +296,15 @@ nav.nav-icons a.active-nav img {
 
 
 <nav class="nav-icons">
-    <a href="{% url 'vender' %}">
+    <a href="{% url 'vender' %}#txt-caixa">
         <img src="{% static 'images/sales-3.png' %}" alt="Vendas">
-        <span>Vender</span>
+        <span>Caixa-Registradora</span>
     </a>
-    <a href="{% url 'estoque' %}">
+    <a href="{% url 'estoque' %}#txt-estoque">
         <img src="{% static 'images/4573150.png' %}" alt="Estoque">
         <span>Estoque</span>
     </a>
-    <a href="{% url 'produtos' %}">
+    <a href="{% url 'produtos' %}#txt-produtos">
         <img src="{% static 'images/historico.png' %}" alt="Produtos">
         <span>Histórico de Produtos</span>
     </a>
@@ -382,23 +385,31 @@ nav.nav-icons a.active-nav img {
         });
     }
 
-// Função para destacar o link de navegação ativo
-    function destacarNavAtivo() {
-        const navLinks = document.querySelectorAll('nav.nav-icons a');
-        const urlAtual = window.location.pathname; // pega a URL atual sem domínio
+function destacarNavAtivo() {
+  const navLinks = document.querySelectorAll('nav.nav-icons a');
+  // Pega a URL completa da janela, removendo o hash (#)
+  const urlAtualLimpa = window.location.href.split('#')[0];
 
-        navLinks.forEach(link => {
-            // Se o href do link for igual ao pathname atual, adiciona a classe 'active-nav'
-            if(link.getAttribute('href') === urlAtual) {
-                link.classList.add('active-nav');
-            } else {
-                link.classList.remove('active-nav');
-            }
-        });
+  navLinks.forEach(link => {
+    // Pega o valor do href do link, removendo o hash (#) para comparação
+    const linkHrefLimpo = link.href.split('#')[0];
+
+    // 1. Tenta a comparação exata da URL completa primeiro
+    if (linkHrefLimpo === urlAtualLimpa) {
+      link.classList.add('active-nav');
     }
+    // 2. Se a comparação exata falhar (ex: diferença em query params), tenta comparar o pathname
+    // Isso é útil se os seus links usam caminhos relativos como `/pagina`
+    else if (link.getAttribute('href') === window.location.pathname) {
+      link.classList.add('active-nav');
+    }
+    else {
+      link.classList.remove('active-nav');
+    }
+  });
+}
 
-    // Chama a função ao carregar a página
-    window.addEventListener('DOMContentLoaded', destacarNavAtivo);
+window.addEventListener('DOMContentLoaded', destacarNavAtivo);
 
 
 

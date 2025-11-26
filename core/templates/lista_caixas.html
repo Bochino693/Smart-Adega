@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* Container geral */
+.movimentos-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Título */
+.movimentos-container h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Filtro horizontal */
+.filtro-botoes {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+
+.filtro-botoes button {
+    padding: 10px 20px;
+    border: 1px solid #444;
+    background-color: #fff;
+    cursor: pointer;
+    border-radius: 5px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.filtro-botoes button.active,
+.filtro-botoes button:hover {
+    background-color: #222;
+    color: #fff;
+    border-color: #222;
+}
+
+/* Tabela moderna */
+table.movimentos-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    text-align: center;
+    font-family: 'Arial', sans-serif;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+table.movimentos-table th {
+    background-color: #222;
+    color: #fff;
+    padding: 12px;
+    font-weight: 600;
+}
+
+table.movimentos-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e0e0e0;
+    transition: background 0.3s;
+}
+
+/* Hover moderno nas linhas */
+table.movimentos-table tbody tr:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+/* Cores por tipo de movimento */
+tr[data-tipo="Abertura"] { background-color: #e6f7e6; }
+tr[data-tipo="Saída"] { background-color: #fde6e6; }
+tr[data-tipo="Fechamento"] { background-color: #e6f0fd; }
+
+/* Modal */
+.modal-custom {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0; top: 0;
+    width: 100%; height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6);
+}
+
+.modal-content-custom {
+    background-color: #fff;
+    margin: 8% auto;
+    padding: 20px;
+    border-radius: 15px;
+    max-width: 550px;
+    box-shadow: 0 5px 25px rgba(0,0,0,0.3);
+    position: relative;
+    animation: fadeIn 0.4s;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0; transform: translateY(-20px);}
+    to {opacity: 1; transform: translateY(0);}
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px; right: 15px;
+    font-size: 26px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Card dentro do modal */
+.modal-card {
+    border-radius: 12px;
+    padding: 25px;
+    background: linear-gradient(145deg, #fefefe, #e9e9e9);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+}
+
+.modal-card h3 {
+    margin-bottom: 20px;
+    color: #222;
+}
+
+.modal-card p {
+    margin: 8px 0;
+    font-size: 15px;
+    line-height: 1.4;
+}
+</style>
+
+<div class="movimentos-container">
+    <h2>Movimentações de Caixas</h2>
+
+    <!-- Filtro horizontal -->
+    <div class="filtro-botoes">
+        <form method="get" id="filtroForm">
+            <input type="hidden" name="data" value="{{ request.GET.data }}">
+            <button type="submit" name="filtro" value="" class="{% if filtro == '' %}active{% endif %}">Todos</button>
+            <button type="submit" name="filtro" value="abertura" class="{% if filtro == 'abertura' %}active{% endif %}">Abertura</button>
+            <button type="submit" name="filtro" value="saida" class="{% if filtro == 'saida' %}active{% endif %}">Saída</button>
+            <button type="submit" name="filtro" value="fechamento" class="{% if filtro == 'fechamento' %}active{% endif %}">Fechamento</button>
+        </form>
+    </div>
+
+    <!-- Tabela -->
+    <table class="movimentos-table">
+        <thead>
+            <tr>
+                <th>Tipo</th>
+                <th>ID</th>
+                <th>Usuário</th>
+                <th>Valor</th>
+                <th>Descrição / Status</th>
+                <th>Data</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in movimentos %}
+            <tr data-tipo="{{ m.tipo }}" onclick="abrirModal({{ m|safe }})">
+                <td>{{ m.tipo|default:"-" }}</td>
+                <td>{{ m.id|default:"-" }}</td>
+                <td>{{ m.usuario|default:"N/A" }}</td>
+                <td>{{ m.valor|default:0|floatformat:2 }}</td>
+                <td>{% if m.tipo == 'Saída' %}{{ m.descricao|default:"-" }}{% else %}{{ m.status|default:"-" }}{% endif %}</td>
+                <td class="data-cell" data-data="{{ m.data|date:'c' }}">{{ m.data }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">Nenhum movimento encontrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div style="margin-top:15px; text-align:center;">
+        <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span><br>
+        {% if page_obj.has_previous %}
+            <a href="?{% if filtro %}filtro={{ filtro }}&{% endif %}{% if request.GET.data %}data={{ request.GET.data }}&{% endif %}page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+            <a href="?{% if filtro %}filtro={{ filtro }}&{% endif %}{% if request.GET.data %}data={{ request.GET.data }}&{% endif %}page={{ page_obj.next_page_number }}">Próxima</a>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal -->
+<div id="modalDetalhes" class="modal-custom">
+    <div class="modal-content-custom">
+        <span class="close-modal" onclick="fecharModal()">&times;</span>
+        <div class="modal-card" id="modalCard"></div>
+    </div>
+</div>
+
+<script>
+
+function simplificarData(dataStr) {
+    if (!dataStr) return "-";
+
+    const data = new Date(dataStr);
+    const hoje = new Date();
+    hoje.setHours(0,0,0,0); // só a data
+    const dataComparar = new Date(data);
+    dataComparar.setHours(0,0,0,0);
+
+    const diffMs = hoje - dataComparar;
+    const diffDias = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDias === 0) return "Hoje";
+    if (diffDias === 1) return "Ontem";
+    if (diffDias < 7) return `Há ${diffDias} dias`;
+    if (diffDias < 14) return "Há uma semana";
+    if (diffDias < 21) return "Há duas semanas";
+    if (diffDias < 31) return `Há ${Math.floor(diffDias / 7)} semanas`;
+    if (diffDias < 365) return `Há ${Math.floor(diffDias / 30)} meses`;
+    return `Há ${Math.floor(diffDias / 365)} anos`;
+}
+
+
+document.addEventListener("DOMContentLoaded", function() {
+    const datas = document.querySelectorAll(".data-cell");
+    datas.forEach(td => {
+        const dataOriginal = td.getAttribute("data-data");
+        td.textContent = simplificarData(dataOriginal);
+    });
+});
+
+
+// Abre modal e preenche conteúdo dinamicamente
+function abrirModal(movimento) {
+    const modal = document.getElementById('modalDetalhes');
+    const card = document.getElementById('modalCard');
+
+    const usuario = movimento.usuario || "N/A";
+    const valor = movimento.valor != null ? parseFloat(movimento.valor).toFixed(2) : "0.00";
+    const descricao = movimento.descricao || movimento.status || "-";
+    const data = movimento.data ? new Date(movimento.data).toLocaleString() : "-";
+
+    let extra = '';
+    // Mostrar dados adicionais conforme tipo
+    if(movimento.tipo === 'Saída' && movimento.caixa_id) {
+        extra = `<p><strong>Caixa ID:</strong> ${movimento.caixa_id}</p>`;
+    } else if (movimento.tipo === 'Fechamento' && movimento.caixa_id) {
+        extra = `<p><strong>Caixa ID:</strong> ${movimento.caixa_id}</p>`;
+    }
+
+    card.innerHTML = `
+        <h3>Detalhes - ${movimento.tipo || "-"}</h3>
+        <p><strong>ID:</strong> ${movimento.id || "-"}</p>
+        <p><strong>Usuário:</strong> ${usuario}</p>
+        <p><strong>Valor:</strong> ${valor}</p>
+        <p><strong>Descrição / Status:</strong> ${descricao}</p>
+        ${extra}
+        <p><strong>Data:</strong> ${data}</p>
+    `;
+
+    modal.style.display = "block";
+}
+
+// Fecha modal
+function fecharModal() {
+    document.getElementById('modalDetalhes').style.display = "none";
+}
+
+// Fecha modal clicando fora
+window.onclick = function(event) {
+    const modal = document.getElementById('modalDetalhes');
+    if(event.target == modal) {
+        modal.style.display = "none";
+    }
+}
+</script>
+
+{% endblock %}

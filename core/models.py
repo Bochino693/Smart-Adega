@@ -156,19 +156,54 @@ class SaidaEstoque(Prime):
 
 
 from django.utils.timezone import now
+from django.db import models
+from django.contrib.auth.models import User  # Assumindo o modelo User padrão
+from django.utils.timezone import now
 
 
-class DinheiroCaixa(Prime):
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE)
-    valor_inicial = models.DecimalField(max_digits=10, decimal_places=2, default=0, null=True)
-    data_abertura = models.DateField(default=now)
-
-    class Meta:
-        verbose_name = "Caixa do Dia"
-        verbose_name_plural = "Caixas do Dia"
+class Caixa(models.Model):
+    usuario_abertura = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='caixas_abertos')
+    valor_inicial = models.DecimalField(max_digits=10, decimal_places=2)
+    valor_atual = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    data_abertura = models.DateTimeField(default=now)
+    status = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"Caixa de {self.usuario.username} - {self.data_abertura} (R$ {self.valor_inicial})"
+        status_str = "Aberto" if self.status else "Fechado"
+        usuario_nome = self.usuario_abertura.username if self.usuario_abertura else "N/A"
+        return f"Caixa #{self.pk} - {usuario_nome} ({status_str})"
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['usuario_abertura', 'data_abertura'],
+                name='caixa_unico_por_usuario_dia'
+            )
+        ]
+
+
+class SaidaCaixa(models.Model):
+    caixa = models.ForeignKey(Caixa, on_delete=models.CASCADE, related_name='saidas', null=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='saidas_registradas')
+    valor = models.DecimalField(decimal_places=2, max_digits=10)
+    descricao = models.CharField(max_length=255, null=True)
+    data_saida = models.DateTimeField(default=now)
+
+    def __str__(self):
+        caixa_id = self.caixa.pk if self.caixa else "N/A"
+        return f"Saída de R${self.valor} do caixa #{caixa_id} em {self.data_saida}"
+
+
+class FechamentoCaixa(models.Model):
+    caixa = models.OneToOneField(Caixa, related_name='fechamento', on_delete=models.CASCADE, null=True)
+    usuario = models.ForeignKey(User, on_delete=models.SET_NULL, related_name='fechamentos_realizados', null=True)
+    valor_final = models.DecimalField(max_digits=10, decimal_places=2)
+    data_fechamento = models.DateTimeField(default=now)
+
+    def __str__(self):
+        caixa_id = self.caixa.pk if self.caixa else "N/A"
+        usuario_nome = self.usuario.username if self.usuario else "N/A"
+        return f"Fechamento do Caixa #{caixa_id} por {usuario_nome}"
 
 
 class Venda(Prime):
@@ -181,7 +216,7 @@ class Venda(Prime):
         ('pendente', 'Pendente'),
     ]
 
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, related_name='vendas_usuario')
     forma_pagamento = models.CharField(max_length=20, choices=FORMAS_PAGAMENTO, default='pix')
     valor_bruto = models.DecimalField(decimal_places=2, max_digits=10, null=True)  # ✅ valor antes da taxa
     desconto_total = models.DecimalField(decimal_places=2, max_digits=10, default=0)

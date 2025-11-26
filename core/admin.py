@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     CategoriaProduto, Produtos, Estoque, Venda, ItemVenda,
-    SaidaEstoque, CategoriaDespesas, Despesa, FinanceiroMes
+    SaidaEstoque, CategoriaDespesas, Despesa, FinanceiroMes, Caixa
 )
 
 # ======================
@@ -54,6 +54,65 @@ class SaidaEstoqueAdmin(admin.ModelAdmin):
 # ===============
 # DINHEIRO CAIXA
 # ===============
+
+@admin.register(Caixa)
+class CaixaAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'usuario_abertura',
+        'valor_inicial',
+        'valor_atual',
+        'status',
+        'data_abertura',
+    )
+    list_filter = ('status', 'data_abertura', 'usuario_abertura')
+    search_fields = ('usuario_abertura__username',)
+    readonly_fields = ('data_abertura',)
+    ordering = ('-data_abertura',)
+    list_editable = ('status',)
+
+    fieldsets = (
+        (None, {
+            'fields': ('usuario_abertura', 'valor_inicial', 'valor_atual', 'status')
+        }),
+        ('Datas', {
+            'fields': ('data_abertura',),
+            'classes': ('collapse',),
+        }),
+    )
+
+
+from .models import SaidaCaixa, FechamentoCaixa
+
+@admin.register(SaidaCaixa)
+class SaidaCaixaAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'caixa',
+        'usuario',
+        'valor',
+        'descricao',
+        'data_saida',
+    )
+    list_filter = ('data_saida', 'usuario', 'caixa')
+    search_fields = ('usuario__username', 'descricao', 'caixa__id')
+    readonly_fields = ('data_saida',)
+    ordering = ('-data_saida',)
+
+
+@admin.register(FechamentoCaixa)
+class FechamentoCaixaAdmin(admin.ModelAdmin):
+    list_display = (
+        'id',
+        'caixa',
+        'usuario',
+        'valor_final',
+        'data_fechamento',
+    )
+    list_filter = ('data_fechamento', 'usuario')
+    search_fields = ('usuario__username', 'caixa__id')
+    readonly_fields = ('data_fechamento',)
+    ordering = ('-data_fechamento',)
 
 
 # ===========
@@ -108,6 +167,8 @@ class DespesaAdmin(admin.ModelAdmin):
 # ===================
 from django.contrib import admin
 from .models import FinanceiroMes
+
+
 
 @admin.register(FinanceiroMes)
 class FinanceiroMesAdmin(admin.ModelAdmin):

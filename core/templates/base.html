@@ -73,7 +73,7 @@
     <nav class="navbar navbar-dark bg-dark fixed-top shadow">
         <div class="container-fluid">
             <button class="btn btn-outline-light me-3" id="menu-toggle">☰</button>
-            <a class="navbar-brand d-flex align-items-center" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="/#txt-caixa">
                 <img src="{% static 'images/mufasa.png' %}" alt="Adega Mufasa" width="35" class="me-2">
                 Adega Mufasa Gestão
             </a>
@@ -107,6 +107,11 @@
         <div class="submenu">
             <a href="{% url 'balanco' %}">Balanço Financeiro</a>
 
+        </div>
+        <!-- Funcionários -->
+        <button class="menu-btn">Dinheiro em Caixa ▾</button>
+        <div class="submenu">
+            <a href="{% url 'lista_caixas' %}">Ver Movimentações de Caixa</a>
         </div>
         <!-- Funcionários -->
         <button class="menu-btn">Àrea de Funcionários ▾</button>

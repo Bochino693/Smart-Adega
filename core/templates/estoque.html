@@ -354,9 +354,47 @@
     border-radius: 4px;
 }
 
+
+.caixa-status-container {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 20px;
+}
+
+.caixa-card {
+    position: relative;
+}
+
+.caixa-icon {
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: .25s;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+}
+
+.caixa-icon.offline {
+    background: #ffdddd;
+    color: #c00000;
+    border: 2px solid #c00000;
+}
+
+.caixa-icon.online {
+    background: #ddffdd;
+    color: #008800;
+    border: 2px solid #008800;
+}
+
+.caixa-icon:hover {
+    transform: scale(1.05);
+}
+
 </style>
 
-<h2 class="titulo-estoque">Estoque de Produtos</h2>
+<h2 class="titulo-estoque" id="txt-estoque">Estoque de Produtos</h2>
+
+
 
 <!-- FILTROS -->
 <form method="get" style="margin-bottom:20px; display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">

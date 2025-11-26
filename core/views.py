@@ -1,9 +1,10 @@
 from django.db.models import Q, Case, When, IntegerField, Sum
 
 from django.core.paginator import Paginator
+from django.urls import reverse_lazy
 
 from .forms import ProdutoForm, EstoqueForm
-from .models import Produtos, CategoriaProduto, Estoque, DinheiroCaixa
+from .models import Produtos, CategoriaProduto, Estoque
 
 from django.utils.timezone import now
 from django.views.decorators.http import require_POST
@@ -13,7 +14,95 @@ from django.contrib.auth import authenticate, login
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 
-from .models import CategoriaDespesas
+from .models import CategoriaDespesas, Caixa, SaidaCaixa, FechamentoCaixa
+from django.urls import reverse
+from django.core.cache import cache
+from django.conf import settings
+
+from django.views.generic import ListView
+from django.views.generic import TemplateView
+from django.utils.dateparse import parse_date
+from django.contrib.auth import logout
+
+
+class MovimentosCaixaView(TemplateView):
+    template_name = "lista_caixas.html"
+    paginate_by = 30
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        filtro = self.request.GET.get('filtro', '').lower()
+        busca_data = self.request.GET.get('data', '')
+
+        movimentos = []
+
+        # Aberturas
+        if filtro in ['', 'abertura']:
+            qs = Caixa.objects.all()
+            if busca_data:
+                data_obj = parse_date(busca_data)
+                if data_obj:
+                    qs = qs.filter(data_abertura__date=data_obj)
+            for c in qs:
+                movimentos.append({
+                    "tipo": "Abertura",
+                    "id": c.id,
+                    "usuario": c.usuario_abertura.username if c.usuario_abertura else "N/A",
+                    "valor": c.valor_inicial,
+                    "descricao": "",
+                    "status": "Aberto" if c.status else "Fechado",
+                    "data": c.data_abertura
+                })
+
+        # Saídas
+        if filtro in ['', 'saida']:
+            qs = SaidaCaixa.objects.all()
+            if busca_data:
+                data_obj = parse_date(busca_data)
+                if data_obj:
+                    qs = qs.filter(data_saida__date=data_obj)
+            for s in qs:
+                movimentos.append({
+                    "tipo": "Saída",
+                    "id": s.id,
+                    "usuario": s.usuario.username if s.usuario else "N/A",
+                    "valor": s.valor,
+                    "descricao": s.descricao or "",
+                    "status": "",
+                    "data": s.data_saida
+                })
+
+        # Fechamentos
+        if filtro in ['', 'fechamento']:
+            qs = FechamentoCaixa.objects.all()
+            if busca_data:
+                data_obj = parse_date(busca_data)
+                if data_obj:
+                    qs = qs.filter(data_fechamento__date=data_obj)
+            for f in qs:
+                movimentos.append({
+                    "tipo": "Fechamento",
+                    "id": f.id,
+                    "usuario": f.usuario.username if f.usuario else "N/A",
+                    "valor": f.valor_final,
+                    "descricao": "",
+                    "status": "",
+                    "data": f.data_fechamento
+                })
+
+        # Ordenar por data decrescente
+        movimentos.sort(key=lambda x: x['data'], reverse=True)
+
+        # Paginação
+        paginator = Paginator(movimentos, self.paginate_by)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        context['movimentos'] = page_obj
+        context['is_paginated'] = page_obj.has_other_pages()
+        context['page_obj'] = page_obj
+        context['filtro'] = filtro
+        return context
 
 
 def login_view(request):
@@ -27,14 +116,58 @@ def login_view(request):
 
         if user is not None:  # <-- remove 'and user.is_staff'
             login(request, user)
-            return redirect('vender')  # agora qualquer usuário logado pode ir
+            return redirect(reverse('vender') + "#txt-caixa")  # agora qualquer usuário logado pode ir
         else:
             messages.error(request, "Usuário ou senha inválidos")
 
     return render(request, "login.html")
 
 
-from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+
+
+@login_required
+@csrf_exempt
+def abrir_caixa(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            valor_inicial = float(data.get("valor_inicial", 0))
+            if valor_inicial < 0:
+                return JsonResponse({"success": False, "error": "Valor inválido"})
+
+            # Criar objeto Caixa
+            caixa = Caixa.objects.create(
+                usuario_abertura=request.user,
+                valor_inicial=valor_inicial,
+                valor_atual=valor_inicial,
+                data_abertura=now(),
+                status=True
+            )
+            return JsonResponse({"success": True})
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)})
+    return JsonResponse({"success": False, "error": "Método não permitido"})
+
+
+from decimal import Decimal
+
+
+def atualizar_caixa(caixa: Caixa, valor_entrada: Decimal):
+    """
+    Soma o valor da entrada ao valor_atual do caixa mantendo o histórico.
+    Nunca zera valor_inicial nem valor_atual.
+    """
+
+    # Se valor_atual for None, usa o valor inicial
+    if caixa.valor_atual is None:
+        caixa.valor_atual = caixa.valor_inicial or Decimal("0.00")
+
+    # Soma corretamente
+    caixa.valor_atual = (Decimal(caixa.valor_atual) + Decimal(valor_entrada)).quantize(Decimal("0.01"))
+
+    # Atualiza apenas este campo
+    caixa.save(update_fields=["valor_atual"])
 
 
 def abater_estoque(produto: Produtos, quantidade: int) -> int:
@@ -95,6 +228,12 @@ def abater_estoque(produto: Produtos, quantidade: int) -> int:
     return total_abatido
 
 
+from django.utils.timezone import now, localtime
+
+# tempo que a idempotency key fica válida (segundos)
+IDEMPOTENCY_TTL = getattr(settings, "IDEMPOTENCY_TTL", 10)  # por ex. 10s
+
+
 @csrf_exempt
 def finalizar_venda(request):
     if request.method != "POST":
@@ -104,13 +243,21 @@ def finalizar_venda(request):
         dados = json.loads(request.body)
         carrinho = dados.get("carrinho", [])
         forma_pagamento = dados.get("forma_pagamento")
-        desconto_input = Decimal(dados.get("desconto", 0))
-        valor_pago = Decimal(dados.get("valor_pago", 0))
+        desconto_input = Decimal(str(dados.get("desconto", "0"))).quantize(Decimal("0.01"))
+        valor_pago = Decimal(str(dados.get("valor_pago", "0"))).quantize(Decimal("0.01"))
         usuario = request.user if request.user.is_authenticated else None
         nome_cliente = dados.get("nome_cliente")
+        idempotency_key = dados.get("idempotency_key")
 
         if not carrinho:
             return JsonResponse({"sucesso": False, "erro": "Carrinho vazio"})
+
+        # Se idempotency_key for enviada e já processada -> retorna resultado anterior
+        if idempotency_key:
+            cached = cache.get(f"venda_idem_{idempotency_key}")
+            if cached:
+                # retorna o mesmo payload (evita duplicação)
+                return JsonResponse({"sucesso": True, **cached})
 
         TAXAS = {
             "cartao_debito": Decimal("1.99"),
@@ -121,27 +268,31 @@ def finalizar_venda(request):
             "pendente": Decimal("0"),
         }
 
-        valor_bruto = sum(Decimal(str(i["preco"])) * int(i["qtd"]) for i in carrinho)
+        valor_bruto = sum(Decimal(str(i["preco"])) * int(i.get("qtd", 0)) for i in carrinho)
         desconto_total = desconto_input
-        valor_com_desconto = max(valor_bruto - desconto_total, 0)
+        valor_com_desconto = max(valor_bruto - desconto_total, Decimal("0.00"))
         taxa_percentual = TAXAS.get(forma_pagamento, Decimal("0"))
-        taxa_aplicada = (valor_com_desconto * taxa_percentual / 100).quantize(Decimal("0.01"))
-        valor_liquido = max(valor_com_desconto - taxa_aplicada, 0)
+        taxa_aplicada = (valor_com_desconto * taxa_percentual / Decimal("100")).quantize(Decimal("0.01"))
+        valor_liquido = max(valor_com_desconto - taxa_aplicada, Decimal("0.00"))
 
         troco = Decimal("0.00")
         if forma_pagamento == "dinheiro" and valor_pago > valor_liquido:
             troco = (valor_pago - valor_liquido).quantize(Decimal("0.01"))
 
+        # Validação correta para pagamento em dinheiro
+        # Validação crítica corrigida
+        if forma_pagamento == "dinheiro" and valor_pago > 0 and valor_pago < valor_liquido:
+            return JsonResponse({"sucesso": False, "erro": "Valor pago em dinheiro menor que o total da venda."})
+
         with transaction.atomic():
             estoque_insuficiente = []
 
-            # 1️⃣ Abate estoque
+            # 1) Abate estoque
             for item in carrinho:
                 produto = Produtos.objects.get(id=item["id"])
                 categoria = (produto.categoria.nome_categoria or "").lower()
                 qtd_solicitada = int(item.get("qtd", 0))
 
-                # Produtos normais: abate estoque
                 if categoria not in ["combos", "doses", "fracionados"]:
                     abatido = abater_estoque(produto, qtd_solicitada)
                     if abatido < qtd_solicitada:
@@ -149,29 +300,23 @@ def finalizar_venda(request):
                             f"{produto.nome_produto} (Disponível: {abatido}, Necessário: {qtd_solicitada})"
                         )
 
-                # Complementos (gelo sempre obrigatório para combos/doses)
-                # 🧊 Complementos de gelo (padrão diferente para combos)
                 gelo_items = [comp for comp in item.get("complementos", []) if comp["tipo"] == "gelo"]
                 for gelo in gelo_items:
                     produto_comp = Produtos.objects.get(id=gelo["id"])
-
-                    # 🔥 Se for combo e não tiver quantidade definida maior, usa padrão de 5
                     if categoria == "combos":
                         qtd_comp = int(gelo.get("qtd", 0)) or 5
                     else:
                         qtd_comp = int(gelo.get("qtd", 0))
-
                     abatido = abater_estoque(produto_comp, qtd_comp)
                     if abatido < qtd_comp:
                         estoque_insuficiente.append(
                             f"{produto_comp.nome_produto} (Disponível: {abatido}, Necessário: {qtd_comp})"
                         )
 
-                # Red Bull (opcional)
                 rb_items = [comp for comp in item.get("complementos", []) if comp["tipo"] == "rb"]
                 for rb in rb_items:
                     produto_comp = Produtos.objects.get(id=rb["id"])
-                    qtd_comp = int(rb.get("qtd", 0))  # ✅ corrigido
+                    qtd_comp = int(rb.get("qtd", 0))
                     abatido = abater_estoque(produto_comp, qtd_comp)
                     if abatido < qtd_comp:
                         estoque_insuficiente.append(
@@ -181,7 +326,7 @@ def finalizar_venda(request):
             if estoque_insuficiente:
                 raise ValueError("Estoque insuficiente: " + ", ".join(estoque_insuficiente))
 
-            # 2️⃣ Cria venda
+            # 2) Cria venda
             venda = Venda.objects.create(
                 usuario=usuario,
                 forma_pagamento=forma_pagamento,
@@ -192,17 +337,17 @@ def finalizar_venda(request):
                 nome_cliente=nome_cliente,
             )
 
-            # 3️⃣ Cria itens da venda
+            # 3) Cria itens da venda
             for item in carrinho:
                 produto = Produtos.objects.get(id=item["id"])
                 categoria = (produto.categoria.nome_categoria or "").lower()
                 qtd_solicitada = int(item.get("qtd", 0))
                 preco_unitario = Decimal(str(item["preco"]))
                 valor_item_bruto = preco_unitario * qtd_solicitada
-                desconto_item = round((valor_item_bruto / valor_bruto) * desconto_total, 2) if valor_bruto > 0 else 0
-                valor_item_liquido = max(valor_item_bruto - desconto_item, 0)
+                desconto_item = ((valor_item_bruto / valor_bruto) * desconto_total).quantize(
+                    Decimal("0.01")) if valor_bruto > 0 else Decimal("0.00")
+                valor_item_liquido = max(valor_item_bruto - desconto_item, Decimal("0.00"))
 
-                # Item principal
                 ItemVenda.objects.create(
                     venda=venda,
                     produto=produto,
@@ -212,31 +357,51 @@ def finalizar_venda(request):
                     desconto=desconto_item,
                 )
 
-                # 🧾 Complementos: gelo + Red Bull
                 for comp in item.get("complementos", []):
                     produto_comp = Produtos.objects.get(id=comp["id"])
-
                     if categoria == "combos" and comp["tipo"] == "gelo":
                         qtd_comp = int(comp.get("qtd", 0)) or 5
                     else:
                         qtd_comp = int(comp.get("qtd", 0))
-
                     ItemVenda.objects.create(
                         venda=venda,
                         produto=produto_comp,
                         quantidade=qtd_comp,
                         valor_unitario=produto_comp.preco_venda,
                         valor_total=produto_comp.preco_venda * qtd_comp,
-                        desconto=0,
+                        desconto=Decimal("0.00"),
                     )
 
-        return JsonResponse({
-            "sucesso": True,
+            # 4) Atualiza Caixa com lock (select_for_update)
+            if forma_pagamento == "dinheiro":
+                caixa_atual = Caixa.objects.select_for_update().filter(
+                    usuario_abertura=usuario,
+                    status=True,
+                    data_abertura__date=timezone.now().date()
+                ).first()
+
+                if not caixa_atual:
+                    return JsonResponse({
+                        "sucesso": False,
+                        "erro": "Nenhum caixa aberto hoje para este usuário."
+                    })
+
+                # usa a função para somar corretamente o valor da venda
+                atualizar_caixa(caixa_atual, valor_liquido)
+
+        # atinge aqui: sucesso
+        result_payload = {
             "venda_id": venda.id,
             "valor_liquido": float(valor_liquido),
             "valor_bruto": float(valor_bruto),
             "troco": float(troco),
-        })
+        }
+
+        # se idempotency_key fornecida, guarda retorno em cache curto
+        if idempotency_key:
+            cache.set(f"venda_idem_{idempotency_key}", result_payload, IDEMPOTENCY_TTL)
+
+        return JsonResponse({"sucesso": True, **result_payload})
 
     except ValueError as ve:
         return JsonResponse({"sucesso": False, "erro": str(ve)})
@@ -246,9 +411,87 @@ def finalizar_venda(request):
         return JsonResponse({"sucesso": False, "erro": str(e)})
 
 
-from django.db.models import Q, Case, When, IntegerField
+from decimal import Decimal
 
-from collections import defaultdict
+
+@login_required
+@csrf_exempt
+def registrar_saida_caixa(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método não permitido"})
+
+    try:
+        data = json.loads(request.body)
+        valor = data.get("valor", 0)
+        descricao = data.get("descricao", "")
+
+        # Converter para Decimal
+        valor = Decimal(str(valor))
+
+        if valor <= 0:
+            return JsonResponse({"success": False, "error": "Valor inválido"})
+
+        # Pegar o caixa aberto do usuário
+        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
+            '-data_abertura').first()
+        if not caixa_aberto:
+            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
+
+        # Criar saída
+        saida = SaidaCaixa.objects.create(
+            caixa=caixa_aberto,
+            usuario=request.user,
+            valor=valor,
+            descricao=descricao,
+            data_saida=now()
+        )
+
+        # Atualizar valor do caixa
+        caixa_aberto.valor_atual = (caixa_aberto.valor_atual or Decimal('0.00')) - valor
+        caixa_aberto.save()
+
+        return JsonResponse({"success": True})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+@login_required
+@csrf_exempt
+def fechar_caixa(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método não permitido"})
+
+    try:
+        # Pega o caixa aberto do usuário
+        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
+            '-data_abertura').first()
+        if not caixa_aberto:
+            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
+
+        # Atualiza status do caixa
+        caixa_aberto.status = False
+        caixa_aberto.save()
+
+        # Cria o objeto FechamentoCaixa
+        FechamentoCaixa.objects.create(
+            caixa=caixa_aberto,
+            usuario=request.user,
+            valor_final=caixa_aberto.valor_atual or Decimal('0.00'),
+            data_fechamento=now()
+        )
+
+        # Logout do usuário
+        logout(request)
+
+        # Retorna sucesso com redirecionamento para login
+        return JsonResponse({"success": True, "redirect_url": reverse_lazy('login')})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+from django.db.models import Q, Case, When, IntegerField
 
 
 def vender(request):
@@ -290,6 +533,13 @@ def vender(request):
     # --- Vendas do dia ---
     vendas_dia = Venda.objects.filter(data__date=hoje).prefetch_related('itens', 'itens__produto').order_by("-data")
 
+    caixa_aberto = None
+    if request.user.is_authenticated:
+        # Pega o caixa mais recente do dia (qualquer usuário)
+        caixa_aberto = Caixa.objects.filter(
+            data_abertura__date=hoje
+        ).order_by('-data_abertura').first()
+
     # --- Renderiza diretamente os objetos para o template ---
     return render(request, "vender.html", {
         "produtos_paginados": produtos_paginados,
@@ -300,6 +550,7 @@ def vender(request):
         "filtro_busca": busca,
         "filtro_categoria": categoria_filtro,
         "categorias_com_gelo": categorias_com_gelo,
+        "caixa_aberto": caixa_aberto,
     })
 
 
@@ -924,7 +1175,6 @@ from django.shortcuts import render
 from datetime import datetime
 import json
 from django.db.models import Q
-
 
 # Importe Venda e outros modelos/módulos necessários
 from datetime import datetime, date

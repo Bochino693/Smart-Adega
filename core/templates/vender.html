@@ -219,7 +219,7 @@ body.dark .modal-content button:hover { background: #bfa038; }
 
   /* Caixa central do modal */
   .modal-content-custom {
-    background: #111;
+       background: #111;
     color: #fff;
     border: 2px solid #ffcc00;
     border-radius: 16px;
@@ -227,8 +227,13 @@ body.dark .modal-content button:hover { background: #bfa038; }
     padding: 20px 25px;
     position: relative;
     box-shadow: 0 0 20px rgba(255,204,0,0.4);
-    text-align: center;
+    text-align: center; /* Para texto */
     animation: fadeIn 0.3s ease-in-out;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* centraliza os filhos */
+    gap: 10px; /* espaçamento entre campos *
   }
 
   .modal-title-custom {
@@ -378,7 +383,7 @@ input:checked + .slider:before {
 
  /* Escurece a tela de fundo mais intenso */
   .modal-backdrop.show {
-      opacity: 0.7; /* padrão do Bootstrap é 0.5 */
+      opacity: 0.2 !important;
       background-color: #000; /* fundo escuro */
   }
 
@@ -392,9 +397,101 @@ input:checked + .slider:before {
       transform: scale(1);
   }
 
+/* Card do dinheiro do caixa posicionado à direita, mais acima */
+.card-caixa {
+    position: absolute; /* Absoluto dentro do container */
+    top: -150px; /* Ajuste para subir o card acima */
+    right: 0; /* Fica colado na direita */
+    background: #1c1c1c;
+    color: #fff;
+    padding: 15px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    width: 220px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 50; /* Garantir que fique acima de outros elementos */
+}
+
+.card-caixa:hover {
+    background: #2c2c2c;
+}
+
+/* Dropdown */
+.dropdown-caixa {
+    display: none;
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: #333;
+    border-radius: 8px;
+    overflow: hidden;
+    min-width: 180px;
+    z-index: 100;
+}
+
+.card-caixa:hover .dropdown-caixa {
+    display: block;
+}
+
+.dropdown-caixa a {
+    display: block;
+    padding: 10px 15px;
+    color: #fff;
+    text-decoration: none;
+    transition: background 0.2s;
+}
+
+.dropdown-caixa a:hover {
+    background: #444;
+}
+
+/* Status bolinha */
+.status-bolinha {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+/* Online / Offline cores */
+.online { background-color: #28a745; }
+.offline { background-color: #dc3545; }
+
+.modal-custom {
+    display: none;
+    position: fixed; /* fixa na tela inteira */
+    z-index: 9999; /* acima de outros modais */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.6); /* sombra escura */
+}
+
+.modal-content-custom {
+    background-color: #1c1c1c;
+    margin: 10% auto; /* centraliza verticalmente e horizontalmente */
+    padding: 20px;
+    border-radius: 10px;
+    width: 300px;
+    color: #fff;
+    position: relative;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 22px;
+    cursor: pointer;
+}
+
 </style>
 
-<h2 class="titulo-venda">Caixa Registradora</h2>
+<h2 class="titulo-venda" id="txt-caixa">Caixa Registradora</h2>
 
 <!-- Bootstrap CSS -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -403,10 +500,89 @@ input:checked + .slider:before {
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 
+
+{% if user.is_authenticated %}
+<div class="card-caixa">
+    <h5>Dinheiro do Caixa</h5>
+
+    {% if caixa_aberto and caixa_aberto.status %}
+        <p>Valor Inicial R$ {{ caixa_aberto.valor_inicial|default:0|floatformat:2 }}</p>
+        <p>Aberto por {{ caixa_aberto.usuario_abertura.username }}</p>
+
+        <p>Valor Atual R$ {{ caixa_aberto.valor_atual|default:0|floatformat:2 }}</p>
+        <p>Status:
+            <!-- Bolinha verde quando aberto -->
+            <span class="status-bolinha online"></span> Caixa Aberto
+        </p>
+
+        <div class="dropdown-caixa">
+            <!-- Caixa aberto: ações disponíveis -->
+            <a href="#" id="btnSaidaCaixa">Realizar Saída</a>
+            <a href="#" id="btnFecharCaixa">Fechar o Caixa</a>
+
+        </div>
+
+    {% else %}
+        <!-- Caixa fechado ou inexistente -->
+        <p>Status: <span class="status-bolinha offline"></span> Fechado</p>
+        <div class="dropdown-caixa">
+            <a href="#" id="btnAbrirCaixa">Abrir o Caixa</a>
+        </div>
+    {% endif %}
+</div>
+{% endif %}
+
+
+<!-- Modal de Abrir Caixa -->
+<div id="abrirCaixaModal" class="modal-custom" style="display:none;">
+  <div class="modal-content-custom">
+    <span class="close-modal" id="fecharAbrirCaixa">&times;</span>
+    <h4>Abrir Caixa</h4>
+
+    <label for="valorInicial">Valor Inicial (R$)</label>
+    <input type="text" id="valorInicial" placeholder="0,00" class="input-small" />
+
+    <button class="btn-confirmar" id="confirmarAbrirCaixa">Confirmar</button>
+  </div>
+</div>
+
+<!-- Modal de saída -->
+<div id="saidaCaixaModal" class="modal-custom">
+    <div class="modal-content-custom">
+        <span class="close-modal" onclick="fecharModalSaida()">&times;</span>
+        <h4>Registrar Saída do Caixa</h4>
+
+        <label for="valorSaida">Valor</label>
+        <input type="text" id="valorSaida" placeholder="0,01" class="input-small">
+
+        <label for="descricaoSaida">Descrição</label>
+        <input type="text" id="descricaoSaida" placeholder="Descrição da saída" class="input-small">
+
+        <button id="confirmarSaida" class="btn-confirmar">Registrar Saída</button>
+    </div>
+</div>
+
+
+
+<!-- Modal de Fechamento do Caixa -->
+<div id="fecharCaixaModal" class="modal-custom">
+    <div class="modal-content-custom">
+        <span class="close-modal" onclick="fecharModalFechamento()">&times;</span>
+        <h4>Fechar o Caixa</h4>
+        <p>Tem certeza que deseja fechar o caixa atual?</p>
+        <div style="margin-top: 20px; display: flex; justify-content: space-around;">
+            <button id="confirmarFechamento" class="btn-confirmar">Sim</button>
+            <button onclick="fecharModalFechamento()" class="btn-cancelar">Cancelar</button>
+        </div>
+    </div>
+</div>
+
+
 <div class="venda-container">
 
+
     <!-- PRODUTOS -->
-    <div class="venda-principal">
+    <div class="venda-principal" >
 
         <!-- Filtros -->
         <div class="filtros">
@@ -1046,6 +1222,40 @@ btnConfirmarAdd.addEventListener("click", function() {
 function salvarCarrinho(){ localStorage.setItem("carrinho", JSON.stringify(carrinho)); }
 function carregarCarrinho(){ const c = localStorage.getItem("carrinho"); if(c) carrinho = JSON.parse(c); }
 
+
+function mostrarFeedback({ tipo, titulo, mensagem, autoClose = true, tempo = 3000 }) {
+    const modalEl = document.getElementById('feedbackModal');
+    const iconEl = document.getElementById('feedbackIcon');
+    const titleEl = document.getElementById('feedbackTitle');
+    const msgEl = document.getElementById('feedbackMessage');
+
+    if(tipo === 'sucesso'){
+        iconEl.innerHTML = '✅';
+        titleEl.classList.remove('text-danger');
+        titleEl.classList.add('text-success');
+    } else {
+        iconEl.innerHTML = '❌';
+        titleEl.classList.remove('text-success');
+        titleEl.classList.add('text-danger');
+    }
+
+    titleEl.textContent = titulo;
+    msgEl.textContent = mensagem;
+
+    // ⚠️ Se já existir modal Bootstrap inicializado, reutiliza
+    let bsModal = bootstrap.Modal.getInstance(modalEl);
+    if(!bsModal) bsModal = new bootstrap.Modal(modalEl);
+
+    bsModal.show();
+
+    if(autoClose){
+        setTimeout(() => bsModal.hide(), tempo);
+    }
+
+    return bsModal; // retorna o objeto Bootstrap para poder escutar o hidden
+}
+
+
 // Garante que o DOM foi carregado antes de atualizar o carrinho
 document.addEventListener("DOMContentLoaded", () => {
     carregarCarrinho(); // carrega os itens salvos
@@ -1069,6 +1279,15 @@ function setupCalculadora(inputId){
     });
     input.addEventListener("paste", e => e.preventDefault());
 }
+
+function normalizarValor(v) {
+    if (!v) return 0;
+    return parseFloat(
+        v.replace(/\./g, '')  // remove TODOS pontos
+         .replace(',', '.')   // troca vírgula por ponto
+    ) || 0; // se NaN vira 0
+}
+
 
 // --- Atualizar carrinho e calcular total/troco ---
 function atualizarCarrinho() {
@@ -1105,11 +1324,13 @@ function atualizarCarrinho() {
 
     // --- Calcular troco ---
     const valorPagoInput = document.getElementById("valorPago").value.replace(',','.');
-    const valorPago = parseFloat(valorPagoInput) || 0;
+    const valorPago = normalizarValor(document.getElementById("valorPago").value);
+
+
     const formaPagamento = document.getElementById("formaPagamento").value;
 
     let troco = 0;
-    if(formaPagamento === "dinheiro" && valorPago > total){
+    if (formaPagamento === "dinheiro" && valorPago > total){
         troco = valorPago - total;
         // exibir troco dinamicamente
         if(!document.getElementById("trocoHidden")){
@@ -1127,123 +1348,141 @@ function atualizarCarrinho() {
     salvarCarrinho();
 }
 
-function mostrarFeedback({ tipo, titulo, mensagem, autoClose = true, tempo = 3000 }) {
-    const modalEl = document.getElementById('feedbackModal');
-    const iconEl = document.getElementById('feedbackIcon');
-    const titleEl = document.getElementById('feedbackTitle');
-    const msgEl = document.getElementById('feedbackMessage');
-
-    if(tipo === 'sucesso'){
-        iconEl.innerHTML = '✅';
-        titleEl.classList.remove('text-danger');
-        titleEl.classList.add('text-success');
-    } else {
-        iconEl.innerHTML = '❌';
-        titleEl.classList.remove('text-success');
-        titleEl.classList.add('text-danger');
-    }
-
-    titleEl.textContent = titulo;
-    msgEl.textContent = mensagem;
-
-    // ⚠️ Se já existir modal Bootstrap inicializado, reutiliza
-    let bsModal = bootstrap.Modal.getInstance(modalEl);
-    if(!bsModal) bsModal = new bootstrap.Modal(modalEl);
-
-    bsModal.show();
-
-    if(autoClose){
-        setTimeout(() => bsModal.hide(), tempo);
-    }
-
-    return bsModal; // retorna o objeto Bootstrap para poder escutar o hidden
+// util: gera UUID simples (v4-like)
+function gerarUUID() {
+    // versão curta, suficiente para idempotency no cliente
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
 }
 
+let processandoVenda = false;
 
-// --- Finalizar venda atualizado ---
-// --- Finalizar venda atualizado ---
-document.getElementById("finalizarVenda").addEventListener("click", async () => {
-    if(carrinho.length === 0){
-        alert("Carrinho vazio!");
+document.getElementById("finalizarVenda").addEventListener("click", async (ev) => {
+
+    const botao = ev.currentTarget;
+    if (processandoVenda) return;
+
+    if (carrinho.length === 0) {
+        mostrarFeedback({
+            tipo: 'erro',
+            titulo: 'Carrinho vazio',
+            mensagem: 'Adicione produtos antes de finalizar a venda.',
+            autoClose: true,
+            tempo: 3000
+        });
         return;
     }
 
+    processandoVenda = true;
+    botao.disabled = true;
+    botao.dataset.originalText = botao.textContent;
+    botao.textContent = "Processando...";
+
+    const modalProcessando = mostrarFeedback({
+        tipo: 'sucesso',
+        titulo: 'Processando venda',
+        mensagem: 'Enviando para o servidor...',
+        autoClose: false,
+        tempo: 0
+    });
+
+    // === CAMPOS NORMALIZADOS ===
     const formaPagamento = document.getElementById("formaPagamento").value;
-    const desconto = parseFloat(document.getElementById("descontoCarrinho").value.replace(',','.')) || 0;
-    const valorPago = parseFloat(document.getElementById("valorPago").value.replace(',','.')) || 0;
+    const valorPago = normalizarValor(document.getElementById("valorPago").value);
+    const desconto = normalizarValor(document.getElementById("descontoCarrinho").value);
     const nomeCliente = document.getElementById("nomeCliente").value || null;
 
-    let total = carrinho.reduce((acc,i)=>acc+i.preco*i.qtd,0) - desconto;
-    if(total < 0) total = 0;
+    // === TOTAL LOCAL ===
+    const valorBrutoLocal = carrinho.reduce((acc, i) => acc + (i.preco * i.qtd), 0);
+    const totalLocal = Math.max(valorBrutoLocal - desconto, 0);
 
-    if(formaPagamento !== "dinheiro") {
-        if(valorPago > total || (valorPago>0 && valorPago<total)){
-            alert("Valor pago inválido para esta forma de pagamento.");
-            return;
-        }
-    } else {
-        if(valorPago < total){
-            alert("O valor pago em dinheiro é menor que o total da venda.");
-            return;
-        }
-    }
-
-    try {
-        const response = await fetch("{% url 'finalizar_venda' %}", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": "{{ csrf_token }}"
-            },
-            body: JSON.stringify({
-                carrinho: carrinho,
-                forma_pagamento: formaPagamento,
-                desconto: desconto,
-                valor_pago: valorPago,
-                nome_cliente: nomeCliente
-            })
-        });
-
-        const data = await response.json();
-
-        if(data.sucesso){
-            // ✅ Mostra modal de sucesso e aguarda fechar antes de atualizar a tela
-            const bsModal = mostrarFeedback({
-                tipo: 'sucesso',
-                titulo: 'Venda registrada!',
-                mensagem: `ID da venda: ${data.venda_id}\nItens vendidos: ${carrinho.length}\nValor Bruto: R$ ${data.valor_bruto.toFixed(2)}\nValor Líquido: R$ ${data.valor_liquido.toFixed(2)}\nTroco: R$ ${data.troco.toFixed(2)}`,
-                autoClose: true,
-                tempo: 2500
-            });
-
-            // Limpa carrinho e campos
-            carrinho = [];
-            atualizarCarrinho();
-            document.getElementById("descontoCarrinho").value = "0,00";
-            document.getElementById("valorPago").value = "0,00";
-
-            // ⚡ Redireciona só quando o modal fechar
-            const modalEl = document.getElementById('feedbackModal');
-            modalEl.addEventListener('hidden.bs.modal', () => {
-                window.location.href = "{% url 'vender' %}";
-            }, { once: true });
-
-        } else {
-            mostrarFeedback({
-                tipo: 'erro',
-                titulo: 'Erro ao registrar venda',
-                mensagem: data.erro || 'Erro desconhecido'
-            });
-        }
-
-    } catch(err){
-        console.error(err);
+    // === VALIDAÇÃO: DINHEIRO < TOTAL ===
+    if (formaPagamento === "dinheiro" && valorPago > 0 && valorPago < totalLocal) {
         mostrarFeedback({
             tipo: 'erro',
-            titulo: 'Erro de comunicação',
-            mensagem: err.message || 'Verifique sua conexão'
+            titulo: 'Pagamento insuficiente',
+            mensagem: `Valor pago (R$ ${valorPago.toFixed(2)}) é inferior ao total (R$ ${totalLocal.toFixed(2)}).`,
+            autoClose: true,
+            tempo: 3000
+        });
+
+        processandoVenda = false;
+        botao.disabled = false;
+        botao.textContent = botao.dataset.originalText;
+        return;
+    }
+
+    console.log({ valorPago, desconto, totalLocal });
+
+    // --- ENVIO AO SERVIDOR ---
+    try {
+    const response = await fetch("{% url 'finalizar_venda' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            carrinho,
+            forma_pagamento: formaPagamento,
+            desconto,
+            valor_pago: valorPago,
+            nome_cliente: nomeCliente,
+            idempotency_key: gerarUUID()
+        })
+    });
+
+    const data = await response.json();
+
+    if (data.sucesso) {
+        mostrarFeedback({
+            tipo: 'sucesso',
+            titulo: 'Venda registrada!',
+            mensagem: `ID da venda: ${data.venda_id}`,
+            autoClose: true,
+            tempo: 2500
+        });
+
+        carrinho = [];
+        atualizarCarrinho();
+        document.getElementById("descontoCarrinho").value = "0,00";
+        document.getElementById("valorPago").value = "0,00";
+
+        // aguarda o feedback aparecer e recarrega a página descendo no caixa
+    setTimeout(() => {
+        window.location.href = window.location.pathname + "#txt-caixa";
+        window.location.reload();
+    }, 1300);
+
+    return;   // impede que o código continue
+    } else {
+        // trata erro enviado pelo backend
+        mostrarFeedback({
+            tipo: 'erro',
+            titulo: 'Erro ao finalizar venda',
+            mensagem: data.erro || 'Erro desconhecido',
+            autoClose: true,
+            tempo: 4000
         });
     }
+
+} catch (err) {
+    mostrarFeedback({
+        tipo: 'erro',
+        titulo: 'Erro de conexão',
+        mensagem: err.message,
+        autoClose: true,
+        tempo: 4000
+    });
+} finally {
+    processandoVenda = false;
+    botao.disabled = false;
+    botao.textContent = botao.dataset.originalText;
+
+
+}
 });
 
 // --- Função para adicionar venda na coluna "Vendas do Dia" ---
@@ -1299,7 +1538,7 @@ formaPagamentoSelect.addEventListener("change", () => {
 function quitarPendencia(vendaId) {
     const novaForma = document.getElementById(`novaForma${vendaId}`).value;
 
-    fetch("{% url 'quitar_pendente' %}", {
+    fetch("{% url 'quitar_pendente' %}#txt-caixa", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
@@ -1345,6 +1584,219 @@ carrinhoContainer.innerHTML = carrinho.map(item => `
 `).join("");
 
 
+document.addEventListener('DOMContentLoaded', function(){
+
+    const btnAbrirCaixa = document.getElementById('btnAbrirCaixa');
+    const modalAbrirCaixa = document.getElementById('abrirCaixaModal');
+    const btnFechar = document.getElementById('fecharAbrirCaixa');
+    const btnConfirmar = document.getElementById('confirmarAbrirCaixa');
+
+
+        setupCalculadora("valorInicial");
+
+
+    // Abrir modal
+    btnAbrirCaixa.addEventListener('click', function(e){
+        e.preventDefault();
+        modalAbrirCaixa.style.display = 'block';
+    });
+
+    // Fechar modal ao clicar no X
+    btnFechar.addEventListener('click', function(){
+        modalAbrirCaixa.style.display = 'none';
+    });
+
+    // Fechar modal ao clicar fora do conteúdo
+    window.addEventListener('click', function(e){
+        if(e.target === modalAbrirCaixa){
+            modalAbrirCaixa.style.display = 'none';
+        }
+    });
+
+    // Confirmar abertura do caixa via AJAX
+    btnConfirmar.addEventListener('click', function(){
+        let valorInput = document.getElementById('valorInicial').value;
+        let valor = parseFloat(valorInput.replace(',', '.'));
+
+        if(isNaN(valor) || valor < 0){
+            mostrarFeedback({
+            tipo: 'erro',
+            titulo: 'Valor inválido!',
+            mensagem: 'Por favor, digite um valor inicial válido.',
+            autoClose: true
+        });
+
+        return;
+    }
+
+        fetch("{% url 'abrir_caixa' %}#txt-caixa", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "X-CSRFToken": "{{ csrf_token }}"
+            },
+            body: JSON.stringify({
+                valor_inicial: valor
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.success){
+                alert("Caixa aberto com sucesso!");
+                modalAbrirCaixa.style.display = 'none';
+                location.reload();
+            } else {
+                alert("Erro ao abrir o caixa: " + data.error);
+            }
+        })
+        .catch(err => {
+            alert("Erro na comunicação com o servidor");
+            console.error(err);
+        });
+    });
+
+});
+
+
+
+// Ativar formatação no campo de saída quando a página carregar
+document.addEventListener("DOMContentLoaded", function() {
+    setupCalculadora("valorSaida");
+});
+
+// Abrir modal de saída
+document.getElementById('btnSaidaCaixa').addEventListener('click', function(e){
+    e.preventDefault();
+    document.getElementById('saidaCaixaModal').style.display = 'block';
+});
+
+// Fechar modal de saída
+function fecharModalSaida() {
+    document.getElementById('saidaCaixaModal').style.display = 'none';
+}
+
+// Registrar saída via AJAX
+document.getElementById('confirmarSaida').addEventListener('click', function() {
+
+    let valorInput = document.getElementById('valorSaida').value;
+    let descricao = document.getElementById('descricaoSaida').value || "";
+
+    // Converte "10,50" → 10.50
+    let valor = parseFloat(valorInput.replace(',', '.'));
+
+    if(isNaN(valor) || valor <= 0){
+        mostrarFeedback({
+            tipo: "erro",
+            titulo: "Valor inválido",
+            mensagem: "Digite um valor válido para registrar a saída."
+        });
+        return;
+    }
+
+    fetch("{% url 'registrar_saida_caixa' %}#txt-caixa", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            valor: valor,
+            descricao: descricao
+        })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if(data.success){
+
+            mostrarFeedback({
+                tipo: "sucesso",
+                titulo: "Saída registrada!",
+                mensagem: "A saída foi registrada com sucesso."
+            });
+
+            fecharModalSaida();
+
+            setTimeout(() => {
+                window.location.href = window.location.pathname + "#caixa";
+                location.reload();
+            }, 1200);
+
+        } else {
+            mostrarFeedback({
+                tipo: "erro",
+                titulo: "Erro ao registrar",
+                mensagem: data.error
+            });
+        }
+    })
+    .catch(err => {
+        mostrarFeedback({
+            tipo: "erro",
+            titulo: "Falha na comunicação",
+            mensagem: "Não foi possível enviar os dados ao servidor."
+        });
+        console.error(err);
+    });
+
+});
+
+// Abrir modal de fechamento do caixa
+document.getElementById('btnFecharCaixa').addEventListener('click', function(e){
+    e.preventDefault();
+    document.getElementById('fecharCaixaModal').style.display = 'block';
+});
+
+
+const valorSaidaInput = document.getElementById('valorSaida');
+
+valorSaidaInput.addEventListener('input', function(e){
+    let valor = this.value.replace(/\D/g,''); // remove tudo que não é número
+    if(valor.length === 0){
+        this.value = '';
+        return;
+    }
+    // Converte para decimal (2 casas)
+    while(valor.length < 3){
+        valor = '0' + valor;
+    }
+    let reais = valor.slice(0, -2);
+    let centavos = valor.slice(-2);
+    this.value = reais + ',' + centavos;
+});
+
+// Fechar modal
+function fecharModalFechamento(){
+    document.getElementById('fecharCaixaModal').style.display = 'none';
+}
+
+// Função para fechar o caixa via AJAX
+document.getElementById('confirmarFechamento').addEventListener('click', function(){
+    fetch("{% url 'fechar_caixa' %}", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": "{{ csrf_token }}"
+        },
+        body: JSON.stringify({
+            acao: "fechar_caixa"
+        })
+    })
+    .then(resp => resp.json())
+    .then(data => {
+        if(data.success){
+            alert("Caixa fechado com sucesso!");
+            fecharModalFechamento();
+            window.location.href = window.location.pathname + "#caixa";
+            location.reload();
+        } else {
+            alert("Erro ao fechar o caixa: " + data.error);
+        }
+    })
+    .catch(err => {
+        alert("Erro na comunicação com o servidor.");
+        console.error(err);
+    });
+});
 </script>
 
 {% else %}
