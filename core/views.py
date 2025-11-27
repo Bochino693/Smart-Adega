@@ -170,6 +170,87 @@ def atualizar_caixa(caixa: Caixa, valor_entrada: Decimal):
     caixa.save(update_fields=["valor_atual"])
 
 
+from decimal import Decimal
+
+
+@login_required
+@csrf_exempt
+def registrar_saida_caixa(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método não permitido"})
+
+    try:
+        data = json.loads(request.body)
+        valor = data.get("valor", 0)
+        descricao = data.get("descricao", "")
+
+        # Converter para Decimal
+        valor = Decimal(str(valor))
+
+        if valor <= 0:
+            return JsonResponse({"success": False, "error": "Valor inválido"})
+
+        # Pegar o caixa aberto do usuário
+        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
+            '-data_abertura').first()
+        if not caixa_aberto:
+            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
+
+        # Criar saída
+        saida = SaidaCaixa.objects.create(
+            caixa=caixa_aberto,
+            usuario=request.user,
+            valor=valor,
+            descricao=descricao,
+            data_saida=now()
+        )
+
+        # Atualizar valor do caixa
+        caixa_aberto.valor_atual = (caixa_aberto.valor_atual or Decimal('0.00')) - valor
+        caixa_aberto.save()
+
+        return JsonResponse({"success": True})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+@login_required
+@csrf_exempt
+def fechar_caixa(request):
+    if request.method != "POST":
+        return JsonResponse({"success": False, "error": "Método não permitido"})
+
+    try:
+        # Pega o caixa aberto do usuário
+        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
+            '-data_abertura').first()
+        if not caixa_aberto:
+            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
+
+        # Atualiza status do caixa
+        caixa_aberto.status = False
+        caixa_aberto.save()
+
+        # Cria o objeto FechamentoCaixa
+        FechamentoCaixa.objects.create(
+            caixa=caixa_aberto,
+            usuario=request.user,
+            valor_final=caixa_aberto.valor_atual or Decimal('0.00'),
+            data_fechamento=now()
+        )
+
+        # Logout do usuário
+        logout(request)
+
+        # Retorna sucesso com redirecionamento para login
+        return JsonResponse({"success": True, "redirect_url": reverse_lazy('login')})
+
+    except Exception as e:
+        return JsonResponse({"success": False, "error": str(e)})
+
+
+
 def abater_estoque(produto: Produtos, quantidade: int) -> int:
     """
     Abate a quantidade do produto no estoque (por lote mais antigo).
@@ -409,86 +490,6 @@ def finalizar_venda(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({"sucesso": False, "erro": str(e)})
-
-
-from decimal import Decimal
-
-
-@login_required
-@csrf_exempt
-def registrar_saida_caixa(request):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Método não permitido"})
-
-    try:
-        data = json.loads(request.body)
-        valor = data.get("valor", 0)
-        descricao = data.get("descricao", "")
-
-        # Converter para Decimal
-        valor = Decimal(str(valor))
-
-        if valor <= 0:
-            return JsonResponse({"success": False, "error": "Valor inválido"})
-
-        # Pegar o caixa aberto do usuário
-        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
-            '-data_abertura').first()
-        if not caixa_aberto:
-            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
-
-        # Criar saída
-        saida = SaidaCaixa.objects.create(
-            caixa=caixa_aberto,
-            usuario=request.user,
-            valor=valor,
-            descricao=descricao,
-            data_saida=now()
-        )
-
-        # Atualizar valor do caixa
-        caixa_aberto.valor_atual = (caixa_aberto.valor_atual or Decimal('0.00')) - valor
-        caixa_aberto.save()
-
-        return JsonResponse({"success": True})
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
-
-
-@login_required
-@csrf_exempt
-def fechar_caixa(request):
-    if request.method != "POST":
-        return JsonResponse({"success": False, "error": "Método não permitido"})
-
-    try:
-        # Pega o caixa aberto do usuário
-        caixa_aberto = Caixa.objects.filter(usuario_abertura=request.user, status=True).order_by(
-            '-data_abertura').first()
-        if not caixa_aberto:
-            return JsonResponse({"success": False, "error": "Nenhum caixa aberto encontrado"})
-
-        # Atualiza status do caixa
-        caixa_aberto.status = False
-        caixa_aberto.save()
-
-        # Cria o objeto FechamentoCaixa
-        FechamentoCaixa.objects.create(
-            caixa=caixa_aberto,
-            usuario=request.user,
-            valor_final=caixa_aberto.valor_atual or Decimal('0.00'),
-            data_fechamento=now()
-        )
-
-        # Logout do usuário
-        logout(request)
-
-        # Retorna sucesso com redirecionamento para login
-        return JsonResponse({"success": True, "redirect_url": reverse_lazy('login')})
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
 
 
 from django.db.models import Q, Case, When, IntegerField
