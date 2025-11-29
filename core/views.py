@@ -400,7 +400,7 @@ def finalizar_venda(request):
                 categoria = (produto.categoria.nome_categoria or "").lower()
                 qtd_solicitada = int(item.get("qtd", 0))
 
-                if categoria not in ["combos", "doses", "fracionados"]:
+                if categoria not in ["combos", "doses", "fracionados", "caipirinhas"]:
                     abatido = abater_estoque(produto, qtd_solicitada)
                     if abatido < qtd_solicitada:
                         estoque_insuficiente.append(
