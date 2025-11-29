@@ -84,16 +84,122 @@
         </div>
         {% endif %}
 
-        <form method="post">
+        <form id="formLogin" autocomplete="off">
             {% csrf_token %}
-            <label for="username">Username</label>
-            <input type="text" name="username" id="username" placeholder="Digite seu username" required autofocus>
+            <label>Username</label>
+            <input type="text" name="username" id="username" required autocomplete="off">
 
-            <label for="password">Senha</label>
-            <input type="password" name="password" id="password" placeholder="Digite sua senha" required>
+            <label>Senha</label>
+            <input type="password" name="password" id="password" required autocomplete="off">
 
             <button type="submit">Entrar</button>
         </form>
+
+
     </div>
 </div>
+
+<!-- MODAL DE SUCESSO -->
+<div id="modalSucesso" class="modal-custom" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; z-index:9999;">
+    <div style="background:#1c1c1c; padding:30px; border-radius:12px; text-align:center; width:350px; color:#fff; border:2px solid #d4af37;">
+        <h3 style="color:#d4af37;">✔ Login realizado!</h3>
+        <p>Estamos redirecionando...</p>
+    </div>
+</div>
+
+<!-- TOAST DE ERRO -->
+<div id="toastErro" style="
+    display:none;
+    position:fixed;
+    bottom:150px;
+    right:20px;
+    background:#ff4d4d;
+    padding:15px 20px;
+    border-radius:8px;
+    color:#fff;
+    font-weight:bold;
+    z-index:9999;
+    box-shadow:0 0 10px #000;
+">
+    Usuário ou senha inválidos.
+</div>
+
+
+<script>
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
+            if (cookie.startsWith(name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+const csrftoken = getCookie("csrftoken");
+
+document.getElementById("formLogin").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    // 🔥 Fecha qualquer autocomplete aberto
+    document.activeElement.blur();
+
+    const modal = document.getElementById("modalSucesso");
+    const toast = document.getElementById("toastErro");
+
+    modal.querySelector("h3").innerHTML = "🔄 Verificando...";
+    modal.querySelector("p").innerHTML = "Aguarde...";
+    modal.style.display = "flex";
+
+
+    let formData = new FormData(this);
+
+    fetch("", {
+        method: "POST",
+        headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrftoken
+        },
+        body: formData
+    })
+    .then(r => r.json())
+    .then(data => {
+
+        if (data.success) {
+            modal.querySelector("h3").innerHTML = "✔ Login realizado!";
+            modal.querySelector("p").innerHTML = "Redirecionando...";
+
+            setTimeout(() => {
+                window.location.href = "{% url 'vender' %}#txt-caixa";
+            }, 1500);
+
+        } else {
+            modal.style.display = "none";
+
+            toast.innerHTML = data.error;
+            toast.style.display = "block";
+
+            setTimeout(() => {
+                toast.style.display = "none";
+            }, 3000);
+        }
+    })
+    .catch(err => {
+        modal.style.display = "none";
+        toast.innerHTML = "Erro inesperado. Tente novamente.";
+        toast.style.display = "block";
+        setTimeout(() => {
+            toast.style.display = "none";
+        }, 3000);
+    });
+});
+</script>
+
+
+
+
 {% endblock %}

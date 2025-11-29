@@ -2,7 +2,6 @@ from django import forms
 from django.utils import timezone
 from .models import Produtos, Estoque
 
-
 class ProdutoForm(forms.ModelForm):
     class Meta:
         model = Produtos
@@ -10,19 +9,29 @@ class ProdutoForm(forms.ModelForm):
         widgets = {
             'codigo': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Código do produto'}),
             'nome_produto': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nome do produto'}),
-            'preco_venda': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Preço de venda'}),
-            'preco_fornecedor': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Preço fornecedor'}),
+
+            # CAMPOS CORRIGIDOS
+            'preco_venda': forms.TextInput(attrs={
+                'class': 'form-control decimal-input',
+                'placeholder': 'Preço de venda'
+            }),
+            'preco_fornecedor': forms.TextInput(attrs={
+                'class': 'form-control decimal-input',
+                'placeholder': 'Preço fornecedor'
+            }),
+
             'categoria': forms.Select(attrs={'class': 'form-control'}),
             'imagem': forms.ClearableFileInput(attrs={'class': 'form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Campos opcionais
+
         self.fields['preco_venda'].required = False
         self.fields['preco_fornecedor'].required = False
         self.fields['categoria'].required = False
         self.fields['imagem'].required = False
+
 
 
 

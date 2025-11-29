@@ -106,21 +106,30 @@ class MovimentosCaixaView(TemplateView):
 
 
 def login_view(request):
-    if request.user.is_authenticated:
-        return redirect('dash_vendas')  # redireciona se já logado
 
-    if request.method == "POST":
+    # Se já está logado, vai pro painel
+    if request.user.is_authenticated:
+        return redirect('dash_vendas')
+
+    # --- AJAX REQUEST (fetch) ---
+    if request.method == "POST" and request.headers.get("X-Requested-With") == "XMLHttpRequest":
+
         username = request.POST.get('username')
         password = request.POST.get('password')
+
         user = authenticate(request, username=username, password=password)
 
-        if user is not None:  # <-- remove 'and user.is_staff'
+        if user is not None:
             login(request, user)
-            return redirect(reverse('vender') + "#txt-caixa")  # agora qualquer usuário logado pode ir
-        else:
-            messages.error(request, "Usuário ou senha inválidos")
+            return JsonResponse({"success": True})
 
+        else:
+            return JsonResponse({"success": False, "error": "Usuário ou senha inválidos"})
+
+    # --- REQUISIÇÃO NORMAL (GET) ---
     return render(request, "login.html")
+
+
 
 
 from django.contrib.auth.decorators import login_required
@@ -250,7 +259,6 @@ def fechar_caixa(request):
         return JsonResponse({"success": False, "error": str(e)})
 
 
-
 def abater_estoque(produto: Produtos, quantidade: int) -> int:
     """
     Abate a quantidade do produto no estoque (por lote mais antigo).
@@ -337,9 +345,9 @@ def finalizar_venda(request):
         if idempotency_key:
             cached = cache.get(f"venda_idem_{idempotency_key}")
             if cached:
-                # retorna o mesmo payload (evita duplicação)
                 return JsonResponse({"sucesso": True, **cached})
 
+        # TAXAS
         TAXAS = {
             "cartao_debito": Decimal("1.99"),
             "cartao_credito": Decimal("1.99"),
@@ -349,6 +357,7 @@ def finalizar_venda(request):
             "pendente": Decimal("0"),
         }
 
+        # Cálculos iniciais
         valor_bruto = sum(Decimal(str(i["preco"])) * int(i.get("qtd", 0)) for i in carrinho)
         desconto_total = desconto_input
         valor_com_desconto = max(valor_bruto - desconto_total, Decimal("0.00"))
@@ -360,17 +369,34 @@ def finalizar_venda(request):
         if forma_pagamento == "dinheiro" and valor_pago > valor_liquido:
             troco = (valor_pago - valor_liquido).quantize(Decimal("0.01"))
 
-        # Validação correta para pagamento em dinheiro
-        # Validação crítica corrigida
+        # Validação pagamento em dinheiro local (frontend já faz, mas reforçamos)
         if forma_pagamento == "dinheiro" and valor_pago > 0 and valor_pago < valor_liquido:
             return JsonResponse({"sucesso": False, "erro": "Valor pago em dinheiro menor que o total da venda."})
 
+        # =========================
+        # 1) Validação pré-transação: CAIXA aberto (para TODAS as formas)
+        # =========================
+        caixa_aberto = Caixa.objects.filter(
+            usuario_abertura=usuario,
+            status=True,
+            data_abertura__date=timezone.now().date()
+        ).first()
+
+        if not caixa_aberto:
+            return JsonResponse({"sucesso": False, "erro": "Nenhum caixa aberto hoje para este usuário. Nenhuma venda pode ser realizada enquanto o caixa estiver fechado."})
+
+        # =========================
+        # 2) Agora abre a transação e realiza checks/locks e gravações
+        # =========================
         with transaction.atomic():
             estoque_insuficiente = []
 
-            # 1) Abate estoque
+            # Lock no caixa para atualização segura
+            caixa_atual = Caixa.objects.select_for_update().get(id=caixa_aberto.id)
+
+            # 2.1) Abate estoque (usando select_for_update nos produtos para evitar races)
             for item in carrinho:
-                produto = Produtos.objects.get(id=item["id"])
+                produto = Produtos.objects.select_for_update().get(id=item["id"])
                 categoria = (produto.categoria.nome_categoria or "").lower()
                 qtd_solicitada = int(item.get("qtd", 0))
 
@@ -383,7 +409,7 @@ def finalizar_venda(request):
 
                 gelo_items = [comp for comp in item.get("complementos", []) if comp["tipo"] == "gelo"]
                 for gelo in gelo_items:
-                    produto_comp = Produtos.objects.get(id=gelo["id"])
+                    produto_comp = Produtos.objects.select_for_update().get(id=gelo["id"])
                     if categoria == "combos":
                         qtd_comp = int(gelo.get("qtd", 0)) or 5
                     else:
@@ -396,7 +422,7 @@ def finalizar_venda(request):
 
                 rb_items = [comp for comp in item.get("complementos", []) if comp["tipo"] == "rb"]
                 for rb in rb_items:
-                    produto_comp = Produtos.objects.get(id=rb["id"])
+                    produto_comp = Produtos.objects.select_for_update().get(id=rb["id"])
                     qtd_comp = int(rb.get("qtd", 0))
                     abatido = abater_estoque(produto_comp, qtd_comp)
                     if abatido < qtd_comp:
@@ -405,9 +431,10 @@ def finalizar_venda(request):
                         )
 
             if estoque_insuficiente:
+                # força rollback e informa o problema
                 raise ValueError("Estoque insuficiente: " + ", ".join(estoque_insuficiente))
 
-            # 2) Cria venda
+            # 2.2) Cria venda
             venda = Venda.objects.create(
                 usuario=usuario,
                 forma_pagamento=forma_pagamento,
@@ -418,9 +445,9 @@ def finalizar_venda(request):
                 nome_cliente=nome_cliente,
             )
 
-            # 3) Cria itens da venda
+            # 2.3) Cria itens da venda
             for item in carrinho:
-                produto = Produtos.objects.get(id=item["id"])
+                produto = Produtos.objects.get(id=item["id"])  # já foi lockado antes; aqui ok
                 categoria = (produto.categoria.nome_categoria or "").lower()
                 qtd_solicitada = int(item.get("qtd", 0))
                 preco_unitario = Decimal(str(item["preco"]))
@@ -453,24 +480,12 @@ def finalizar_venda(request):
                         desconto=Decimal("0.00"),
                     )
 
-            # 4) Atualiza Caixa com lock (select_for_update)
-            if forma_pagamento == "dinheiro":
-                caixa_atual = Caixa.objects.select_for_update().filter(
-                    usuario_abertura=usuario,
-                    status=True,
-                    data_abertura__date=timezone.now().date()
-                ).first()
+            # 2.4) Atualiza Caixa (já com select_for_update acima)
+            # Mesmo para formas que não sejam dinheiro, atualizamos o saldo/registro do caixa
+            atualizar_caixa(caixa_atual, valor_liquido)
 
-                if not caixa_atual:
-                    return JsonResponse({
-                        "sucesso": False,
-                        "erro": "Nenhum caixa aberto hoje para este usuário."
-                    })
+        # Fim do with transaction.atomic(): commit ocorreu aqui se não houve exceção
 
-                # usa a função para somar corretamente o valor da venda
-                atualizar_caixa(caixa_atual, valor_liquido)
-
-        # atinge aqui: sucesso
         result_payload = {
             "venda_id": venda.id,
             "valor_liquido": float(valor_liquido),
@@ -478,7 +493,7 @@ def finalizar_venda(request):
             "troco": float(troco),
         }
 
-        # se idempotency_key fornecida, guarda retorno em cache curto
+        # se idempotency_key fornecida, guarda retorno em cache curto (após commit)
         if idempotency_key:
             cache.set(f"venda_idem_{idempotency_key}", result_payload, IDEMPOTENCY_TTL)
 
@@ -490,6 +505,7 @@ def finalizar_venda(request):
         import traceback
         traceback.print_exc()
         return JsonResponse({"sucesso": False, "erro": str(e)})
+
 
 
 from django.db.models import Q, Case, When, IntegerField

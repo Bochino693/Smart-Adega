@@ -572,7 +572,6 @@ input:checked + .slider:before {
         <p>Tem certeza que deseja fechar o caixa atual?</p>
         <div style="margin-top: 20px; display: flex; justify-content: space-around;">
             <button id="confirmarFechamento" class="btn-confirmar">Sim</button>
-            <button onclick="fecharModalFechamento()" class="btn-cancelar">Cancelar</button>
         </div>
     </div>
 </div>
@@ -584,19 +583,23 @@ input:checked + .slider:before {
     <!-- PRODUTOS -->
     <div class="venda-principal" >
 
-        <!-- Filtros -->
         <div class="filtros">
-            <form method="get" style="display:flex; gap:10px; width:100%;">
-                <input type="text" name="busca" placeholder="Digite nome ou código" value="{{ filtro_busca }}">
-                <select name="categoria">
-                    <option value="">Todas categorias</option>
-                    {% for cat in categorias %}
-                        <option value="{{ cat }}" {% if filtro_categoria == cat %}selected{% endif %}>{{ cat }}</option>
-                    {% endfor %}
-                </select>
-                <button class="btn-modern" type="submit">Filtrar</button>
-            </form>
-        </div>
+    <form id="formFiltros" method="get" style="display:flex; gap:10px; width:100%;">
+
+        <input type="text"
+               id="inputBusca"
+               name="busca"
+               placeholder="Digite nome ou código"
+               value="{{ filtro_busca }}">
+
+        <select id="selectCategoria" name="categoria">
+            <option value="">Todas categorias</option>
+            {% for cat in categorias %}
+                <option value="{{ cat }}" {% if filtro_categoria == cat %}selected{% endif %}>{{ cat }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
 
         <!-- GRID DE PRODUTOS -->
         <div id="produtosContainer">
@@ -1797,6 +1800,33 @@ document.getElementById('confirmarFechamento').addEventListener('click', functio
         console.error(err);
     });
 });
+
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const inputBusca = document.getElementById("inputBusca");
+    const selectCategoria = document.getElementById("selectCategoria");
+
+    function aplicarFiltroInstantaneo() {
+        const params = new URLSearchParams();
+
+        if (inputBusca.value.trim() !== "") {
+            params.append("busca", inputBusca.value.trim());
+        }
+
+        if (selectCategoria.value.trim() !== "") {
+            params.append("categoria", selectCategoria.value.trim());
+        }
+
+        window.location = "?" + params.toString();
+    }
+
+    inputBusca.addEventListener("input", aplicarFiltroInstantaneo);
+    selectCategoria.addEventListener("change", aplicarFiltroInstantaneo);
+
+});
+
 </script>
 
 {% else %}

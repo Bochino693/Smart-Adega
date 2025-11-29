@@ -98,109 +98,6 @@
     .produtos-grid { grid-template-columns: 1fr; }
 }
 
-/* MODAL */
-.modal-custom {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    background-color: rgba(0,0,0,0.6);
-    z-index: 9999;
-}
-
-
-.modal-content {
-    background: #1f1f1f;
-    color: #fff;
-    padding: 25px;
-    border-radius: 16px;
-    max-width: 420px;
-    width: 90%;
-    text-align: center;
-    position: relative;
-}
-.modal-img {
-    width: 100px;
-    height: 100px;
-    object-fit: cover;
-    margin-bottom: 15px;
-    border-radius: 10px;
-}
-.close {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 24px;
-    cursor: pointer;
-    color: #d4af37;
-}
-.modal-buttons {
-    margin-top: 15px;
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-.modal-nome {
-    font-size: 1.6rem;
-    font-weight: bold;
-    margin-bottom: 15px;
-    color: #ffd700;
-    text-shadow: 0 0 10px rgba(255,215,0,0.5);
-}
-.modal-info p {
-    font-size: 1rem;
-    margin: 6px 0;
-    color: #ddd;
-    transition: color 0.3s ease;
-}
-.modal-info p:hover {
-    color: #ffd700;
-}
-
-/* BOTÕES */
-.btn-modern {
-    padding: 8px 14px;
-    border: none;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: bold;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-}
-.btn-edit { background: #fbc531; color: #111; }
-.btn-edit:hover { background: #ffd700; }
-.btn-delete { background: #e84118; color: #fff; }
-.btn-delete:hover { background: #ff5e3a; }
-.btn-close { background: #718093; color: #fff; }
-.btn-close:hover { background: #95a5a6; }
-
-.modal-info input,
-.modal-info select,
-.modal-info textarea {
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid #444;
-    background: #222;
-    color: #f5f5f5;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-}
-.modal-info input:focus,
-.modal-info select:focus,
-.modal-info textarea:focus {
-    border-color: #ffd700;
-    outline: none;
-    box-shadow: 0 0 6px rgba(255,215,0,0.5);
-}
-.modal-info label {
-    letter-spacing: 0.5px;
-}
-
 /* PAGINAÇÃO */
 .pagination-container .page-link {
     display: inline-block;
@@ -230,73 +127,184 @@
     cursor: default;
 }
 
+/* ===========================================================
+   MODAL BASE
+   =========================================================== */
 .modal-custom {
-  display: none;
-  position: fixed;
-  z-index: 99999;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.7);
-  justify-content: center;
-  align-items: center;
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.75);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
 }
 
 .modal-content {
-  background: #2d2d2d;
-  border: 2px solid #d4af37;
-  border-radius: 12px;
-  color: #f5f5f5;
-  padding: 20px;
-  width: 420px;
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-  animation: fadeIn 0.3s ease-in-out;
+    background: rgba(25, 25, 25, 0.97); /* antes: 0.85 — agora bem mais sólido */
+    max-width: 520px;
+    width: 92%;
+    padding: 32px;
+    border-radius: 18px;
+    box-shadow: 0 10px 35px rgba(0,0,0,0.65);
+    position: relative;
+    animation: fadeIn 0.25s ease-out;
 }
 
-.modal-content input,
-.modal-content select {
-  background: #3b3b3b;
-  border: 1px solid #d4af37;
-  border-radius: 6px;
-  color: white;
-  padding: 6px;
-  width: 100%;
+/* ===========================================================
+   CAMPOS — MELHOR VISUAL + LABELS CENTRALIZADOS
+   =========================================================== */
+.modal-field-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    text-align: center; /* CENTRALIZA AS LABELS */
 }
 
+.modal-field-group label {
+    font-size: 1rem;
+    color: #f0f0f0;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+/* ===========================================================
+   BOTÃO DE FECHAR (X) — ESTILÃO PREMIUM
+   =========================================================== */
+.modal-custom .close {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    font-size: 32px; /* maior */
+    font-weight: bold;
+    color: #e6e6e6; /* mais claro */
+    cursor: pointer;
+    transition: 0.25s ease;
+    user-select: none;
+    padding: 2px 8px;
+    border-radius: 8px; /* deixa mais estiloso */
+}
+
+.modal-custom .close:hover {
+    color: #fff;
+    background: rgba(255,255,255,0.12);
+    transform: scale(1.15);
+}
+
+
+/* Inputs mais claros e visíveis */
+.modal-field-group input,
+.modal-field-group select,
+.modal-field-group textarea {
+    padding: 12px 14px;
+    background: #141414; /* mais claro que o #111 */
+    border-radius: 10px;
+    border: 1px solid #555;
+    color: #fff;
+    font-size: 1rem;
+    width: 100%;
+    transition: 0.25s;
+}
+
+/* Clarear placeholders em todos inputs do modal */
+.modal-field-group input::placeholder,
+.modal-field-group textarea::placeholder,
+.modal-field-group select::placeholder {
+    color: #e0e0e0 !important;  /* antes: cinza escuro */
+    opacity: 1 !important;
+}
+
+
+/* Foco mais suave */
+.modal-field-group input:focus,
+.modal-field-group select:focus,
+.modal-field-group textarea:focus {
+    border-color: #ffd700;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.45);
+    background: #1d1d1d;
+}
+
+/* Preview da imagem */
+.modal-img-preview {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #666;
+    margin: 10px auto 0 auto; /* centraliza */
+    display: block;
+}
+
+/* ===========================================================
+   MODAL DE EDIÇÃO
+   =========================================================== */
+.modal-editar .modal-content {
+    background: rgba(30, 30, 30, 0.97); /* mais sólido */
+}
+
+/* ===========================================================
+   MODAL DE CADASTRO
+   =========================================================== */
+.modal-cadastro .modal-content {
+    background: rgba(32, 32, 32, 0.97); /* mais sólido */
+}
+
+/* ===========================================================
+   BOTÕES
+   =========================================================== */
 .btn-modern {
-  background: #d4af37;
-  color: #1e1e1e;
-  border: none;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-}
-.btn-modern:hover { background: #b9972f; }
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+    border-radius: 12px;
+    padding: 13px 20px;
+    font-weight: bold;
+    font-size: 1rem;
+    transition: 0.25s;
+    cursor: pointer;
+    border: none;
 }
 
-#feedbackModal {
-  display: none !important;
+/* ===========================================================
+   TOAST
+   =========================================================== */
+.toast-container-centered {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 15px;
 }
 
-/* Força o fundo escuro do modal de feedback */
-#feedbackModal {
-  background-color: rgba(0, 0, 0, 0.6);
+.decimal-input {
+    background-color: #222 !important;
+    color: #fff !important;
+    border: 1px solid #555 !important;
 }
 
-#feedbackModal .modal-dialog {
-  z-index: 2000; /* sobrepõe tudo */
+.decimal-input::placeholder {
+    color: #bbb !important;
 }
 
-    #feedbackToast {
-  min-width: 300px;
-  font-size: 1.1rem;
-  text-align: center;
+.decimal-input:focus {
+    border-color: #4CAF50 !important;
+}
+
+.modal-dark input,
+.modal-dark select,
+.modal-dark textarea {
+    background-color: #222 !important;
+    color: #fff !important;
+    border: 1px solid #555 !important;
+}
+
+.modal-dark input::placeholder,
+.modal-dark textarea::placeholder {
+    color: #aaa !important;
+}
+
+.modal-dark select option {
+    background-color: #222;
+    color: #fff;
 }
 
 
@@ -322,12 +330,6 @@
     </button>
 </form>
 
-{% if request.user.is_staff %}
-<div style="display:flex; justify-content:flex-end; margin-bottom: 20px; gap:10px; position: relative; z-index: 10;">
-    <button class="btn-modern btn-edit" onclick="gerarBackup()">💾 Gerar Backup Inicial</button>
-</div>
-{% endif %}
-
 <div style="display:flex; justify-content:flex-end; margin-bottom: 20px; position: relative; z-index: 10;">
     <button class="btn-modern btn-edit" onclick="abrirModalCadastro()">➕ Novo Produto</button>
 </div>
@@ -342,26 +344,30 @@
      data-id="{{ produto.id }}"
      data-nome="{{ produto.nome_produto }}"
      data-codigo="{{ produto.codigo|default:'' }}"
-     data-categoria="{{ produto.categoria.nome_categoria }}"
-    data-preco-venda="{{ produto.preco_venda|default_if_none:0|stringformat:'.2f'|cut:',' }}"
-    data-preco-fornecedor="{{ produto.preco_fornecedor|default_if_none:0|stringformat:'.2f'|cut:',' }}"
-     data-ganho-potencial="{{ produto.ganho_potencial|default_if_none:0 }}">
+     data-categoria="{{ produto.categoria.id }}"
+     data-preco-venda="{{ produto.preco_venda|default_if_none:0|stringformat:'.2f'|cut:',' }}"
+     data-preco-fornecedor="{{ produto.preco_fornecedor|default_if_none:0|stringformat:'.2f'|cut:',' }}"
+     data-ganho-potencial="{{ produto.ganho_potencial|default_if_none:0 }}"
+     data-img="{% if produto.imagem %}{{ produto.imagem.url }}{% else %}{% static 'img/sem-imagem.png' %}{% endif %}">
+
       <img class="produto-img"
            src="{% if produto.imagem %}{{ produto.imagem.url }}{% else %}{% static 'img/sem-imagem.png' %}{% endif %}"
            alt="{{ produto.nome_produto }}">
+
       <div class="produto-info">
           <h5>{{ produto.nome_produto }}</h5>
-    <div class="info-item"><span class="label">Código</span><span class="value">{{ produto.codigo }}</span></div>
-    <div class="info-item"><span class="label">Categoria</span><span class="value">{{ produto.categoria.nome_categoria }}</span></div>
-    <div class="info-item"><span class="label">Venda</span><span class="value">R$ {{ produto.preco_venda|floatformat:2 }}</span></div>
-    <div class="info-item"><span class="label">Fornecedor</span><span class="value">R$ {{ produto.preco_fornecedor|default_if_none:0|floatformat:2 }}</span></div>
-    <div class="info-item"><span class="label">Ganho Potencial</span><span class="value">R$ {{ produto.ganho_potencial|default_if_none:0|floatformat:2 }}</span></div>
+          <div class="info-item"><span class="label">Código</span><span class="value">{{ produto.codigo }}</span></div>
+          <div class="info-item"><span class="label">Categoria</span><span class="value">{{ produto.categoria.nome_categoria }}</span></div>
+          <div class="info-item"><span class="label">Venda</span><span class="value">R$ {{ produto.preco_venda|floatformat:2 }}</span></div>
+          <div class="info-item"><span class="label">Fornecedor</span><span class="value">R$ {{ produto.preco_fornecedor|default_if_none:0|floatformat:2 }}</span></div>
+          <div class="info-item"><span class="label">Ganho Potencial</span><span class="value">R$ {{ produto.ganho_potencial|default_if_none:0|floatformat:2 }}</span></div>
       </div>
   </div>
   {% empty %}
   <p style="grid-column: 1 / -1; text-align: center; color:#aaa;">Nenhum produto encontrado.</p>
   {% endfor %}
 </div>
+
 
 <!-- PAGINAÇÃO -->
 {% if produtos.has_other_pages %}
@@ -391,102 +397,105 @@
 {% endif %}
 
 
-<!-- MODAL CADASTRO -->
-<div id="modalCadastroProduto" class="modal-custom">
-    <div class="modal-content" style="max-width:500px; width:90%; padding:30px; background:#1a1a1a; border-radius:16px; box-shadow:0 10px 30px rgba(0,0,0,0.6);">
+<!-- MODAL DE CADASTRO -->
+<div id="modalCadastroProduto" class="modal-custom modal-cadastro">
+    <div class="modal-content modal-dark">
         <span class="close" onclick="document.getElementById('modalCadastroProduto').style.display='none'">&times;</span>
-        <h3 class="modal-nome" style="font-size:1.8rem; color:#ffd700; text-align:center; margin-bottom:20px;">Cadastrar Novo Produto</h3>
+
+        <h3 class="modal-title">➕ Cadastrar Novo Produto</h3>
 
         <form id="formCadastroProduto" method="POST" enctype="multipart/form-data">
             {% csrf_token %}
-            <div class="modal-info" style="display:flex; flex-direction:column; gap:15px;">
+
+            <div class="modal-fields">
+
                 {% for field in form %}
-                    <div style="display:flex; flex-direction:column;">
-                        <label for="{{ field.id_for_label }}" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">
-                            {{ field.label }}
-                        </label>
+                    <div class="modal-field-group">
+                        <label class="modal-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
                         {{ field }}
                         {% if field.errors %}
-                            <span style="color:#e84118; font-size:0.8rem;">{{ field.errors }}</span>
+                            <span class="modal-error">{{ field.errors }}</span>
                         {% endif %}
                     </div>
                 {% endfor %}
             </div>
 
-            <div class="modal-buttons" style="margin-top:25px; display:flex; justify-content:center; gap:12px;">
-                <button type="submit" class="btn-modern btn-edit" style="flex:1; padding:10px; font-size:1rem;">💾 Salvar</button>
-                <button type="button" class="btn-modern btn-close" style="flex:1; padding:10px; font-size:1rem;" onclick="document.getElementById('modalCadastroProduto').style.display='none'">Cancelar</button>
+            <div class="modal-buttons">
+                <button type="submit" class="btn-modern btn-edit">💾 Salvar</button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- MODAL DE DETALHES / EDIÇÃO -->
+<div id="modalProduto" class="modal-custom modal-editar">
+    <div class="modal-content modal-dark">
+        <span class="close" onclick="fecharModalProduto()">&times;</span>
 
-<div id="modalProduto" class="modal-custom">
-  <div class="modal-content">
-    {% csrf_token %} <span class="close" onclick="fecharModalProduto()">&times;</span>
+        <h3 id="modalTitulo" class="modal-title">📦 Detalhes do Produto</h3>
 
-    <h3 id="modalTitulo" class="modal-nome">📦 Detalhes do Produto</h3>
+        <!-- TOAST (FEEDBACK) -->
+        <div class="toast-container-centered">
+            <div id="feedbackToast" class="toast text-white bg-dark border-0" role="alert">
+                <div class="d-flex">
+                    <div id="toastIcon" class="toast-body"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        </div>
+
+        <form id="formEditarProduto" enctype="multipart/form-data">
+
+            <input type="hidden" id="produtoId" name="id">
+
+            <div class="modal-fields">
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Código</label>
+                    <input type="text" id="produtoCodigo" name="codigo" disabled>
+                </div>
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Nome</label>
+                    <input type="text" id="produtoNome" name="nome_produto" disabled>
+                </div>
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Preço de Venda (R$)</label>
+                    <input type="text" id="produtoPrecoVenda" name="preco_venda" disabled>
+                </div>
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Categoria</label>
+                    <select id="produtoCategoriaSelect" name="categoria" disabled></select>
+                </div>
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Preço Fornecedor (R$)</label>
+                    <input type="text" id="produtoPrecoFornecedor" name="preco_fornecedor" disabled>
+                </div>
+
+                <div class="modal-field-group">
+                    <label class="modal-label">Imagem Atual</label>
+                    <img id="previewImagem" src="" class="modal-img-preview">
+
+                    <!-- AQUI ESTÁ A CORREÇÃO -->
+                    <label for="produtoImagemInput" id="labelUpload" class="btn-modern btn-edit" style="display:none; margin-top:10px;">
+                        📁 Escolher Imagem
+                    </label>
+
+                    <input type="file" id="produtoImagemInput" name="imagem" style="display:none;">
+                </div>
 
 
-<!-- Toast container centralizado -->
-<div class="position-fixed start-50 top-50 translate-middle" style="z-index: 1055">
-  <div id="feedbackToast" class="toast align-items-center text-white bg-dark border-0" role="alert" aria-live="assertive" aria-atomic="true">
-    <div class="d-flex">
-      <div id="toastIcon" class="toast-body"></div>
-      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-buttons">
+                <button type="button" id="btnEditarProduto" class="btn-modern btn-edit">✏️ Editar</button>
+                <button type="submit" id="btnSalvarProduto" class="btn-modern btn-save" style="display:none;">💾 Salvar</button>
+            </div>
+        </form>
     </div>
-  </div>
-</div>
-
-    <form id="formEditarProduto" enctype="multipart/form-data" style="display:flex; flex-direction:column; gap:15px;">
-      <input type="hidden" id="produtoId" name="id">
-
-      <div class="modal-info" style="display:flex; flex-direction:column; gap:10px;">
-
-
-        <div class="campo-staff" style="display:flex; flex-direction:column; gap:10px;">
-          <div style="display:flex; flex-direction:column;">
-            <label for="produtoCodigo" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Código</label>
-            <input type="text" id="produtoCodigo" name="codigo" disabled>
-          </div>
-          <div style="display:flex; flex-direction:column;">
-            <label for="produtoNome" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Nome</label>
-            <input type="text" id="produtoNome" name="nome_produto" disabled>
-          </div>
-          <div style="display:flex; flex-direction:column;">
-            <label for="produtoPrecoVenda" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Preço de Venda (R$)</label>
-            <input type="number" step="0.01" id="produtoPrecoVenda" name="preco_venda" disabled>
-          </div>
-          <div style="display:flex; flex-direction:column;">
-            <label for="produtoCategoriaSelect" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Categoria</label>
-            <select id="produtoCategoriaSelect" name="categoria" disabled>
-                </select>
-          </div>
-        </div>
-
-
-        <div class="campo-comum" style="display:flex; flex-direction:column; gap:10px;">
-          <div style="display:flex; flex-direction:column;">
-            <label for="produtoPrecoFornecedor" style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Preço Fornecedor (R$)</label>
-            <input type="number" step="0.01" id="produtoPrecoFornecedor" name="preco_fornecedor" disabled>
-          </div>
-
-          <div style="display:flex; flex-direction:column;">
-            <label style="font-weight:bold; font-size:0.9rem; color:#ccc; margin-bottom:4px;">Imagem Atual</label>
-            <img id="previewImagem" src="" style="max-width:100px; border-radius:8px; margin-bottom: 5px;">
-            <input type="file" id="produtoImagemInput" name="imagem" style="display:none;">
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-buttons" style="margin-top:15px;">
-        <button type="button" id="btnEditarProduto" class="btn-modern btn-edit">✏️ Editar</button>
-        <button type="submit" id="btnSalvarProduto" class="btn-modern btn-save" style="display:none;">💾 Salvar</button>
-
-      </div>
-    </form>
-  </div>
 </div>
 
 
@@ -495,16 +504,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 
+// ====== UTILIDADES GLOBAIS ======
 let produtoOriginal = {};
 let editando = false;
 
-// Função auxiliar para obter CSRF token
 function getCookie(name) {
     let cookieValue = null;
     if (document.cookie && document.cookie !== "") {
         const cookies = document.cookie.split(";");
-        for (let i = 0; i < cookies.length; i++) {
-            const cookie = cookies[i].trim();
+        for (let cookie of cookies) {
+            cookie = cookie.trim();
             if (cookie.startsWith(name + "=")) {
                 cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
                 break;
@@ -515,269 +524,365 @@ function getCookie(name) {
 }
 const csrftoken = getCookie("csrftoken");
 
-function abrirModalProduto(card) {
-    fecharModalProduto();
-    const modal = document.getElementById("modalProduto");
+// ====== MÁSCARA DECIMAL (reutilizável) ======
+function formatarDecimalCampo(campo) {
+    if (!campo) return;
 
-    // Pega dados do card
+    // evitar múltiplas ligações
+    if (campo.__decimalAttached) return;
+    campo.__decimalAttached = true;
+
+    campo.addEventListener("input", function () {
+        // mantém apenas dígitos
+        let v = this.value.replace(/\D/g, "");
+
+        if (!v) {
+            this.value = "";
+            return;
+        }
+
+        // evita "003,000" — tratar como inteiro / centavos
+        v = String(parseInt(v, 10)); // remove zeros a esquerda
+        if (v === "NaN") v = "0";
+
+        // dividir por 100 para ter 2 casas
+        let n = (parseInt(v, 10) / 100).toFixed(2);
+
+        // substituir ponto por vírgula
+        this.value = n.replace(".", ",");
+    });
+
+    campo.addEventListener("blur", function () {
+        if (!this.value) return;
+        if (!this.value.includes(",")) {
+            this.value = this.value + ",00";
+            return;
+        }
+        const partes = this.value.split(",");
+        if (partes[1].length === 0) this.value = partes[0] + ",00";
+        else if (partes[1].length === 1) this.value = partes[0] + "," + partes[1] + "0";
+    });
+}
+
+// aplica máscara em n elementos
+function aplicarMascarasDecimais(selectors) {
+    selectors.forEach(sel => {
+        try {
+            const el = document.querySelector(sel);
+            if (el) formatarDecimalCampo(el);
+        } catch (e) {}
+    });
+}
+
+// ====== FUNÇÕES DO MODAL DE EDIÇÃO ======
+function abrirModalProduto(card) {
+    // card pode ser elemento DOM ou objeto com dataset
+    if (!card) return;
+    fecharModalProduto(); // limpa estado anterior
+
+    const modal = document.getElementById("modalProduto");
+    if (!modal) return;
+
+    // Dados do card
     const id = card.dataset.id || "";
     const codigo = card.dataset.codigo || "";
     const nome = card.dataset.nome || "";
-    const precoVenda = parseFloat(card.dataset.precoVenda) || 0;
-    const precoFornecedor = parseFloat(card.dataset.precoFornecedor) || 0;
-    const categoriaNome = card.dataset.categoria || "";
+    const precoVenda = parseFloat(card.dataset.precoVenda || 0);
+    const precoFornecedor = parseFloat(card.dataset.precoFornecedor || 0) || 0;
+    const categoriaId = card.dataset.categoria || "";
     const img = card.dataset.img || "";
 
-    // Preenche campos
-    document.getElementById("produtoId").value = id;
-    document.getElementById("produtoCodigo").value = codigo;
-    document.getElementById("produtoNome").value = nome;
-    document.getElementById("produtoPrecoVenda").value = precoVenda.toFixed(2);
-    document.getElementById("produtoPrecoFornecedor").value = precoFornecedor.toFixed(2);
-    document.getElementById("previewImagem").src = img;
-
-    // Popula select de categorias
+    // Preencher campos (com formatação)
+    const elId = document.getElementById("produtoId");
+    const elCodigo = document.getElementById("produtoCodigo");
+    const elNome = document.getElementById("produtoNome");
+    const elPrecoVenda = document.getElementById("produtoPrecoVenda");
+    const elPrecoFornecedor = document.getElementById("produtoPrecoFornecedor");
+    const elPreview = document.getElementById("previewImagem");
     const selectCategoria = document.getElementById("produtoCategoriaSelect");
-    selectCategoria.innerHTML = "";
-    const categorias = [
-        {% for cat in categorias %}
-        { id: "{{ cat.id }}", nome: "{{ cat.nome_categoria }}" },
-        {% endfor %}
-    ];
-    categorias.forEach(cat => {
-        const option = document.createElement("option");
-        option.value = cat.id;
-        option.textContent = cat.nome;
-        if (cat.nome === categoriaNome || String(cat.id) === String(card.dataset.categoriaId)) {
-            option.selected = true;
-        }
-        selectCategoria.appendChild(option);
-    });
 
-    // Guarda valores originais
+    if (elId) elId.value = id;
+    if (elCodigo) elCodigo.value = codigo;
+    if (elNome) elNome.value = nome;
+    if (elPrecoVenda) elPrecoVenda.value = (precoVenda.toFixed(2)).replace(".", ",");
+    if (elPrecoFornecedor) elPrecoFornecedor.value = (precoFornecedor.toFixed(2)).replace(".", ",");
+    if (elPreview) elPreview.src = img || "";
+
+    // popula select (dados injetados pelo template)
+    if (selectCategoria) {
+        selectCategoria.innerHTML = "";
+        const categorias = [
+            {% for cat in categorias %}
+            { id: "{{ cat.id }}", nome: "{{ cat.nome_categoria }}" },
+            {% endfor %}
+        ];
+        categorias.forEach(cat => {
+            const o = document.createElement("option");
+            o.value = cat.id;
+            o.textContent = cat.nome;
+            if (String(cat.id) === String(categoriaId)) o.selected = true;
+            selectCategoria.appendChild(o);
+        });
+    }
+
     produtoOriginal = {
         codigo,
         nome_produto: nome,
-        preco_venda: precoVenda,
-        preco_fornecedor: precoFornecedor,
-        categoria: selectCategoria.value,
+        preco_venda: (precoVenda.toFixed(2)),
+        preco_fornecedor: (precoFornecedor.toFixed(2)),
+        categoria: categoriaId,
         img
     };
 
-    // Desabilita campos (modo visualização)
+    // bloquear campos (visualização)
     document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select")
         .forEach(c => c.disabled = true);
 
-    document.getElementById("produtoImagemInput").style.display = "none";
-    document.getElementById("btnEditarProduto").style.display = "inline-block";
-    document.getElementById("btnSalvarProduto").style.display = "none";
-    document.getElementById("modalTitulo").textContent = "📦 Detalhes do Produto";
+    // esconder input file e configurar label de upload (para quando editar)
+    const fileInput = document.getElementById("produtoImagemInput");
+    const labelUpload = document.getElementById("labelUpload");
+    if (fileInput) fileInput.style.display = "none";
+    if (labelUpload) labelUpload.style.display = "none";
+
+    document.getElementById("btnEditarProduto") && (document.getElementById("btnEditarProduto").style.display = "inline-block");
+    document.getElementById("btnSalvarProduto") && (document.getElementById("btnSalvarProduto").style.display = "none");
+    document.getElementById("modalTitulo") && (document.getElementById("modalTitulo").textContent = "📦 Detalhes do Produto");
+
+    // aplicar máscaras aos campos (caso ainda não aplicadas)
+    formatarDecimalCampo(document.getElementById("produtoPrecoVenda"));
+    formatarDecimalCampo(document.getElementById("produtoPrecoFornecedor"));
+
     modal.style.display = "flex";
 }
 
-// ===== BOTÃO EDITAR =====
-document.getElementById("btnEditarProduto").addEventListener("click", () => {
-    editando = true;
-    const campos = document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select");
-    campos.forEach(c => {
-        if (c.id !== "produtoId") c.disabled = false;
+// editar -> habilitar edição
+const btnEditar = document.getElementById("btnEditarProduto");
+if (btnEditar) {
+    btnEditar.addEventListener("click", () => {
+        editando = true;
+        const campos = document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select");
+        campos.forEach(c => { if (c.id !== "produtoId") c.disabled = false; });
+
+        const fileInput = document.getElementById("produtoImagemInput");
+        const labelUpload = document.getElementById("labelUpload");
+        if (fileInput) fileInput.style.display = "block";
+        if (labelUpload) labelUpload.style.display = "inline-block";
+
+        document.getElementById("btnEditarProduto") && (document.getElementById("btnEditarProduto").style.display = "none");
+        document.getElementById("btnSalvarProduto") && (document.getElementById("btnSalvarProduto").style.display = "inline-block");
+        document.getElementById("modalTitulo") && (document.getElementById("modalTitulo").textContent = "✏️ Editando Produto");
+
+        // reaplicar máscara nos inputs (segurança)
+        formatarDecimalCampo(document.getElementById("produtoPrecoVenda"));
+        formatarDecimalCampo(document.getElementById("produtoPrecoFornecedor"));
     });
+}
 
-    document.getElementById("produtoImagemInput").style.display = "block";
-    document.getElementById("btnEditarProduto").style.display = "none";
-    document.getElementById("btnSalvarProduto").style.display = "inline-block";
-    document.getElementById("modalTitulo").textContent = "✏️ Editando Produto";
-});
+// salvar edição (AJAX)
+const formEditar = document.getElementById("formEditarProduto");
+if (formEditar) {
+    formEditar.addEventListener("submit", e => {
+        e.preventDefault();
 
-// ===== FORM SALVAR =====
-document.getElementById("formEditarProduto").addEventListener("submit", (e) => {
-    e.preventDefault();
+        const formData = new FormData(e.target);
+        const produtoId = document.getElementById("produtoId") ? document.getElementById("produtoId").value : "";
 
-    const campos = document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select");
-    campos.forEach(c => c.disabled = false);
+        // converte vírgula -> ponto
+        if (formData.get("preco_venda")) formData.set("preco_venda", formData.get("preco_venda").replace(",", "."));
+        if (formData.get("preco_fornecedor")) formData.set("preco_fornecedor", formData.get("preco_fornecedor").replace(",", "."));
 
-    const formData = new FormData(e.target);
-    const produtoId = document.getElementById("produtoId").value;
+        const precoVenda = parseFloat(formData.get("preco_venda") || 0);
+        const precoFornecedor = parseFloat(formData.get("preco_fornecedor") || 0);
 
-    // Garante valores numéricos padrão
-    if (!formData.get("preco_venda")) formData.set("preco_venda", "0");
-    if (!formData.get("preco_fornecedor")) formData.set("preco_fornecedor", "0");
-
-    // Validação: fornecedor não pode ser >= venda
-    const precoVenda = parseFloat(formData.get("preco_venda")) || 0;
-    const precoFornecedor = parseFloat(formData.get("preco_fornecedor")) || 0;
-
-    if (precoFornecedor >= precoVenda) {
-        mostrarFeedback({
-            tipo: "erro",
-            titulo: "Erro de Validação",
-            mensagem: "⚠️ O preço do fornecedor não pode ser maior ou igual ao preço de venda."
-        });
-        return;
-    }
-
-    // Verifica alterações
-    let mudou = false;
-    for (const [key, value] of formData.entries()) {
-        if (key === "imagem") {
-            if (value instanceof File && value.name) mudou = true;
-        } else if (produtoOriginal.hasOwnProperty(key)) {
-            if (String(value || "0") !== String(produtoOriginal[key] || "0")) {
-                mudou = true;
-            }
+        if (!isFinite(precoVenda) || !isFinite(precoFornecedor)) {
+            mostrarFeedback({ tipo: "erro", titulo: "Erro", mensagem: "Valores inválidos." });
+            return;
         }
-    }
 
-    if (!mudou) {
-        mostrarFeedback({
-            tipo: "erro",
-            titulo: "Sem alterações",
-            mensagem: "⚠️ Nenhuma alteração detectada."
-        });
-        campos.forEach(c => c.disabled = true);
-        return;
-    }
-
-    // Envia via fetch
-    fetch(`/produto/${produtoId}/editar/`, {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": csrftoken }
-    })
-    .then(res => res.json())
-    .then(resp => {
-            if (resp.sucesso) {
-        mostrarFeedback({
-            tipo: "sucesso",
-            titulo: "Produto Atualizado",
-            mensagem: "✅ Produto atualizado com sucesso!"
-        });
-        setTimeout(() => location.reload(), 2500);
-    } else {
-            const msg = resp.erros || resp.erro || "Erro desconhecido.";
+        if (precoFornecedor >= precoVenda) {
             mostrarFeedback({
                 tipo: "erro",
-                titulo: "Erro ao Salvar",
-                mensagem: "❌ " + msg
+                titulo: "Erro de Validação",
+                mensagem: "⚠️ O preço do fornecedor não pode ser maior ou igual ao preço de venda."
             });
+            return;
         }
-    })
-    .catch(err => {
-        console.error(err);
-        mostrarFeedback({
-            tipo: "erro",
-            titulo: "Erro de Conexão",
-            mensagem: "❌ Não foi possível conectar ao servidor."
+
+        // detectar alteração
+        let mudou = false;
+        for (let [key, value] of formData.entries()) {
+            if (key === "imagem" && value instanceof File && value.name) { mudou = true; break; }
+            if (produtoOriginal[key] !== undefined && String(value) !== String(produtoOriginal[key])) { mudou = true; break; }
+        }
+        if (!mudou) { mostrarFeedback({ tipo: "erro", titulo: "Sem alterações", mensagem: "⚠️ Nenhuma alteração detectada." }); return; }
+
+        // enviar
+        fetch(`/produto/${produtoId}/editar/`, {
+            method: "POST",
+            headers: { "X-CSRFToken": csrftoken },
+            body: formData
+        })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.sucesso) {
+                mostrarFeedback({ tipo: "sucesso", titulo: "Produto Atualizado", mensagem: "✅ Produto atualizado com sucesso!" });
+                setTimeout(() => location.reload(), 900);
+            } else {
+                mostrarFeedback({ tipo: "erro", titulo: "Erro", mensagem: resp.erro || resp.erros || "Erro desconhecido" });
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            mostrarFeedback({ tipo: "erro", titulo: "Erro de Conexão", mensagem: "❌ Não foi possível conectar ao servidor." });
         });
     });
-});
+}
 
-
-// ===== FECHAR MODAL =====
+// fechar modal edição
 function fecharModalProduto() {
     const modal = document.getElementById("modalProduto");
-    if (modal.style.display === "flex") {
-        editando = false;
-        const campos = document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select");
-        campos.forEach(c => c.disabled = true);
-        document.getElementById("produtoImagemInput").style.display = "none";
-        document.getElementById("produtoImagemInput").value = "";
-        document.getElementById("btnEditarProduto").style.display = "inline-block";
-        document.getElementById("btnSalvarProduto").style.display = "none";
-        document.getElementById("modalTitulo").textContent = "📦 Detalhes do Produto";
-        modal.style.display = "none";
+    if (!modal) return;
+
+    modal.style.display = "none";
+    editando = false;
+
+    document.querySelectorAll("#formEditarProduto input:not([type='hidden']), #formEditarProduto select")
+        .forEach(c => c.disabled = true);
+
+    const fileInput = document.getElementById("produtoImagemInput");
+    const labelUpload = document.getElementById("labelUpload");
+    if (fileInput) { fileInput.style.display = "none"; fileInput.value = ""; }
+    if (labelUpload) labelUpload.style.display = "none";
+
+    document.getElementById("btnEditarProduto") && (document.getElementById("btnEditarProduto").style.display = "inline-block");
+    document.getElementById("btnSalvarProduto") && (document.getElementById("btnSalvarProduto").style.display = "none");
+    document.getElementById("modalTitulo") && (document.getElementById("modalTitulo").textContent = "📦 Detalhes do Produto");
+}
+
+// ====== MODAL DE CADASTRO ======
+(function setupCadastroModal() {
+    const modalCadastro = document.getElementById("modalCadastroProduto");
+    const formCadastro = document.getElementById("formCadastroProduto");
+    if (!modalCadastro || !formCadastro) return;
+
+    // botão de abrir (se existir no DOM, ou chame abrirModalCadastro())
+    window.abrirModalCadastro = function() {
+        formCadastro.reset();
+
+        // garantir placeholders visíveis e limpar valores dos decimais
+        const decs = formCadastro.querySelectorAll("input[name='preco_venda'], input[name='preco_fornecedor']");
+        decs.forEach(d => d.value = "");
+
+        // estilizar file input: criar label acionador se não existir
+        hookupFileInputs(formCadastro);
+
+        modalCadastro.style.display = "flex";
+        // foco no primeiro campo de texto
+        const first = formCadastro.querySelector("input:not([type='hidden']):not([type='file'])");
+        if (first) first.focus();
+    };
+
+    // clique fora fecha
+    modalCadastro.addEventListener("click", function(e) {
+        if (e.target === modalCadastro) modalCadastro.style.display = "none";
+    });
+
+    // acoplar file inputs a um label botão para evitar conflito com botões do form
+    function hookupFileInputs(formEl) {
+        const files = formEl.querySelectorAll("input[type='file']");
+        files.forEach((fi, idx) => {
+            // se já existe label gerenciado, skip
+            let lab = fi.closest(".modal-field-group") ? fi.closest(".modal-field-group").querySelector(".file-trigger") : null;
+            if (!lab) {
+                // criar label botão
+                lab = document.createElement("label");
+                lab.className = "file-trigger btn-modern btn-edit";
+                lab.style.cursor = "pointer";
+                lab.style.display = "inline-block";
+                lab.style.marginTop = "8px";
+                lab.textContent = "📁 Escolher Imagem";
+                lab.addEventListener("click", () => fi.click());
+
+                // inserir após o input (é invisível), ou no container
+                if (fi.parentNode) {
+                    fi.style.display = "none";
+                    fi.parentNode.appendChild(lab);
+                }
+            }
+        });
     }
-}
 
-// ... (Resto do seu JavaScript: modal cadastro, backup, usuário padrão) ...
-// (MANTENHA O RESTO DO SEU CÓDIGO JS ORIGINAL A PARTIR DAQUI)
+    // aplicar máscaras nos campos do cadastro
+    formatarDecimalCampo(formCadastro.querySelector("input[name='preco_venda']"));
+    formatarDecimalCampo(formCadastro.querySelector("input[name='preco_fornecedor']"));
 
+    // intercepta submit do cadastro (AJAX)
+    formCadastro.addEventListener("submit", function(e) {
+        e.preventDefault();
 
-// ======= MODAL CADASTRO (mantém igual) =======
-function abrirModalCadastro() {
-  document.getElementById('modalCadastroProduto').style.display = 'flex';
-}
+        // converter virgulas -> pontos em campos decimais
+        const decs = formCadastro.querySelectorAll("input[name='preco_venda'], input[name='preco_fornecedor']");
+        decs.forEach(c => {
+            if (c && c.value && c.value.includes(",")) {
+                c.value = c.value.replace(/\./g, "").replace(",", ".");
+            }
+        });
 
-window.onclick = function(event) {
-  const modal = document.getElementById('modalCadastroProduto');
-  if (event.target == modal) modal.style.display = "none";
-};
+        const data = new FormData(formCadastro);
 
-// ======= FORM CADASTRO PRODUTO =======
-document.getElementById('formCadastroProduto').addEventListener('submit', function(e){
-  e.preventDefault();
-  const formData = new FormData(this);
-  fetch("{% url 'cadastrar_produto' %}", {
-      method: "POST",
-      headers: {'X-CSRFToken': '{{ csrf_token }}'},
-      body: formData
-  })
-  .then(res => res.json())
-  .then(data => {
-      if(data.success){
-          alert("Produto cadastrado com sucesso!");
-          location.reload();
-      } else {
-          alert("Erro: " + (data.error || "Verifique os campos."));
-      }
-  })
-  .catch(err => alert("Erro: " + err));
+        fetch("{% url 'cadastrar_produto' %}", {
+            method: "POST",
+            headers: { "X-CSRFToken": csrftoken },
+            body: data
+        })
+        .then(r => r.json())
+        .then(resp => {
+            if (resp.success) {
+                mostrarFeedback({ tipo: "sucesso", titulo: "Cadastro", mensagem: "✅ Produto cadastrado com sucesso!" });
+                setTimeout(() => {
+                    modalCadastro.style.display = "none";
+                    location.reload(); // ou injetar o produto sem reload
+                }, 700);
+            } else {
+                // se backend enviou form.errors como objeto, tentamos mostrar resumido
+                const msg = resp.error || resp.message || JSON.stringify(resp);
+                mostrarFeedback({ tipo: "erro", titulo: "Erro ao cadastrar", mensagem: msg });
+            }
+        })
+        .catch(err => {
+            console.error("Erro cadastrar:", err);
+            mostrarFeedback({ tipo: "erro", titulo: "Erro de Conexão", mensagem: "❌ Não foi possível conectar ao servidor." });
+        });
+    });
+
+    // expõe hookup caso queira reaplicar manualmente
+    window.hookupCadastroFileInputs = hookupFileInputs;
+})();
+
+// ====== APLICA MÁSCARA AOS CAMPOS PÚBLICOS EXISTENTES (edição e cadastro) ======
+document.addEventListener("DOMContentLoaded", () => {
+    // editar
+    formatarDecimalCampo(document.getElementById("produtoPrecoVenda"));
+    formatarDecimalCampo(document.getElementById("produtoPrecoFornecedor"));
+    // cadastro (inputs gerados pelo Django form)
+    formatarDecimalCampo(document.querySelector("input[name='preco_venda']"));
+    formatarDecimalCampo(document.querySelector("input[name='preco_fornecedor']"));
 });
 
-// ======= GERAR BACKUP =======
-function gerarBackup() {
-  if (!confirm("Deseja realmente gerar o backup de categorias e produtos?")) return;
-  fetch("{% url 'gerar_backup' %}", {
-      method: "POST",
-      headers: {"X-CSRFToken": "{{ csrf_token }}","Content-Type": "application/json"},
-      body: JSON.stringify({})
-  })
-  .then(res => res.json())
-  .then(data => {
-      if(data.success){
-          alert("Backup gerado com sucesso!");
-          location.reload();
-      } else {
-          alert("Erro ao gerar backup: " + (data.error || "Verifique o console."));
-      }
-  })
-  .catch(err => alert("Erro: " + err));
-}
-
-// ======= CRIAR USUÁRIO PADRÃO =======
-document.addEventListener('DOMContentLoaded', function() {
-  const btn = document.getElementById('btnCriarUsuarioPadrao');
-  if(btn) {
-      btn.addEventListener('click', function() {
-          if(confirm("Deseja realmente criar o usuário padrão admin123?")) {
-              fetch("{% url 'criar_usuario_padrao' %}", {
-                  method: "POST",
-                  headers: {"X-CSRFToken": "{{ csrf_token }}"},
-              })
-              .then(res => res.json())
-              .then(data => {
-                  alert(data.message);
-                  if(data.success) location.reload();
-              })
-              .catch(err => alert("Erro: " + err));
-          }
-      });
-  }
-});
-
+// ====== FEEDBACK (bootstrap toast) ======
 function mostrarFeedback({ tipo, titulo, mensagem }) {
     const toastEl = document.getElementById("feedbackToast");
     const toastIcon = document.getElementById("toastIcon");
-
+    if (!toastEl || !toastIcon) {
+        alert(`${titulo}\n\n${mensagem}`);
+        return;
+    }
     toastIcon.innerHTML = `${tipo === "sucesso" ? "✅" : "❌"} <strong>${titulo}</strong><br>${mensagem}`;
-
-    const toast = new bootstrap.Toast(toastEl, { delay: 2500 });
-    toast.show();
+    new bootstrap.Toast(toastEl, { delay: 2500 }).show();
 }
-
-
-
 </script>
+
+
 
 
 {% endblock %}
