@@ -66,6 +66,8 @@
 <div style="background:#0b0b0b; padding:20px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,0.6);">
     <h3 style="color:#d4af37; margin-bottom:10px; text-align:center;">👤 Top Usuários em Vendas</h3>
     <div id="topUsuariosDiv" style="width:100%; height:400px;"></div>
+
+
 </div>
 
 
@@ -82,7 +84,9 @@
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
 
 <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
 <script type="text/javascript">
+
 google.charts.load("current", {packages:['corechart']});
 google.charts.setOnLoadCallback(drawChart);
 
@@ -188,14 +192,36 @@ google.charts.setOnLoadCallback(drawTopUsuarios);
 function drawTopUsuarios() {
     var labels = {{ topLabels|safe }};
     var values = {{ topValues|safe }};
+    var div = document.getElementById("topUsuariosDiv");
 
-    var dataArray = [['Usuário', 'Total Vendido', { role: 'tooltip', type: 'string', p: { html: true } }]];
+    // --- Se não houver dados, exibe mensagem personalizada ---
+    if (!labels || labels.length === 0) {
+        div.innerHTML = `
+            <div style="
+                text-align:center;
+                color:#d4af37;
+                padding:60px 10px;
+                font-size:20px;
+                font-weight:bold;
+            ">
+                Nenhum usuário associado a vendas neste periodo.
+            </div>
+        `;
+        return; // impede Google Charts de tentar desenhar
+    }
+
+    // --- Monta gráfico normalmente ---
+    var dataArray = [
+        ['Usuário', 'Total Vendido', { role: 'tooltip', type: 'string', p: { html: true } }]
+    ];
+
     for (var i = 0; i < labels.length; i++) {
-        // tooltip personalizado com fundo escuro
-        var tooltip = '<div style="background:#111; color:#d4af37; padding:6px 10px; border-radius:6px; font-size:14px;">' +
-                      '<strong>' + labels[i] + '</strong><br>' +
-                      'Total Vendido: R$ ' + Math.round(values[i]) +
-                      '</div>';
+        var tooltip = `
+            <div style="background:#111; color:#d4af37; padding:6px 10px; border-radius:6px; font-size:14px;">
+                <strong>${labels[i]}</strong><br>
+                Total Vendido: R$ ${Math.round(values[i])}
+            </div>
+        `;
         dataArray.push([labels[i], Math.round(values[i]), tooltip]);
     }
 
@@ -210,17 +236,15 @@ function drawTopUsuarios() {
         hAxis: { textStyle: { color: '#fff' } },
         vAxis: {
             textStyle: { color: '#fff' },
-            format: '0', // mostra números inteiros
+            format: '0'
         },
         chartArea: { width: '80%', height: '70%' },
-        tooltip: { isHtml: true } // ativa HTML no tooltip
+        tooltip: { isHtml: true }
     };
 
-    var chart = new google.visualization.ColumnChart(document.getElementById('topUsuariosDiv'));
+    var chart = new google.visualization.ColumnChart(div);
     chart.draw(data, options);
 }
-
-
 
 
 
